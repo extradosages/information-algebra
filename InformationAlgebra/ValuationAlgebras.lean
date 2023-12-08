@@ -194,7 +194,7 @@ private def MulMarginalize
 
 
 -- TODO: There's something wrong with the naming convention here
-private def mul_one_one
+private def mulOnes
     [DomainMulUnion Φ s]
     (x : Set s)
     (ex : DomainPreimageMulOne Φ s x)
@@ -211,14 +211,14 @@ private def mul_one_one
   ⟨ex' * ey', h⟩
 
 
-private def MulOneOne
+private def MulOnesOne
     [DomainMulUnion Φ s]
     :=
   ∀ x : Set s,
   ∀ ex : DomainPreimageMulOne Φ s x,
   ∀ y : Set s,
   ∀ ey : DomainPreimageMulOne Φ s y,
-  DomainPreimageMulOne' Φ s (x ∪ y) (mul_one_one Φ s x ex y ey)
+  DomainPreimageMulOne' Φ s (x ∪ y) (mulOnes Φ s x ex y ey)
 
 
 /-
@@ -269,7 +269,8 @@ class LabeledValuationAlgebra extends DomainMulUnion Φ s, Marginalize Φ s wher
   /-
   JK:
   Axiom 6, "Neutrality"
+  The neutrality axiom finally specifies combination of neutral elements to give neutral elements.
   -/
-  mul_one_one : MulOneOne Φ s
-  _jk_axiom_6 := mul_one_one
-  _jk_neutrality := mul_one_one
+  mulOnesOne : MulOnesOne Φ s
+  _jk_axiom_6 := mulOnes
+  _jk_neutrality := mulOnes
