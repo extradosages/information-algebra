@@ -31,10 +31,14 @@ notation:10000 "ð " => Domain.domain
 -- Preimages of domains
 def DomainPreimage [Domain Φ s] := { φ : Φ // ð φ = x }
 
+
+local notation:10000 "ð⁻¹ " => DomainPreimage
+
+
 -- Surprised that there isn't a generic coercion from a subtype to the og type...
 -- TODO: Using `CoeOut` here because `(DomainPreimage Φ s r)` is not concrete and `Coe` requires
 -- that that argument be concrete; this was an uninformed choice, am I doing something wrong?
-instance [Domain Φ s] : CoeOut (DomainPreimage Φ s x) Φ where
+instance [Domain Φ s] : CoeOut (ð⁻¹ Φ s x) Φ where
   coe φ := φ.val
 
 
@@ -51,8 +55,8 @@ The preimage of any "mul union" domain is closed under multiplication.
 -/
 lemma preimage_domain_mul_closed
     [inst : DomainMulUnion Φ s]
-    (φ : DomainPreimage Φ s x)
-    (ψ : DomainPreimage Φ s x)
+    (φ : ð⁻¹ Φ s x)
+    (ψ : ð⁻¹ Φ s x)
     -- At this point `⊗` hasn't formally been defined as
     -- heterogenous multiplication between preimages, only in `Φ`
     : ð ((φ : Φ) ⊗ (ψ : Φ)) = x
@@ -65,11 +69,11 @@ lemma preimage_domain_mul_closed
   done
 
 
-instance (priority := high) [DomainMulUnion Φ s] : Mul (DomainPreimage Φ s r) where
+instance (priority := high) [DomainMulUnion Φ s] : Mul (ð⁻¹ Φ s r) where
   mul φ ψ := ⟨(φ : Φ) ⊗ (ψ : Φ), preimage_domain_mul_closed Φ s r φ ψ⟩
 
 
-instance [DomainMulUnion Φ s] : CommSemigroup (DomainPreimage Φ s r) where
+instance [DomainMulUnion Φ s] : CommSemigroup (ð⁻¹ Φ s r) where
   mul_assoc := by
     intros φ ψ ϕ
     apply Subtype.ext_iff_val.mpr
@@ -83,7 +87,7 @@ instance [DomainMulUnion Φ s] : CommSemigroup (DomainPreimage Φ s r) where
 instance (priority := mid)
     [DomainMulUnion Φ s]
     (x y : Set s)
-    : HMul (DomainPreimage Φ s x) (DomainPreimage Φ s y) (DomainPreimage Φ s (x ∪ y))
+    : HMul (ð⁻¹ Φ s x) (ð⁻¹ Φ s y) (ð⁻¹ Φ s (x ∪ y))
     where
   hMul φ ψ := ⟨
     (φ : Φ) ⊗ (ψ : Φ),
@@ -95,12 +99,11 @@ instance (priority := mid)
 
 
 class DomainPreimageMulOne extends DomainMulUnion Φ s where
-  one r : DomainPreimage Φ s r
-  mul_one r : ∀ φ : DomainPreimage Φ s r, (one r) * φ = φ
+  one r : ð⁻¹ Φ s r
+  mul_one r : ∀ φ : ð⁻¹ Φ s r, (one r) * φ = φ
 
 
-set_option quotPrecheck false
-notation:10000 "e " => fun x => (DomainPreimageMulOne.one x : DomainPreimage Φ s x)
+notation:10000 "e " => DomainPreimageMulOne.one
 
 
 --  Marginalizing a valuation
@@ -137,12 +140,15 @@ private def MulMarginalize
   (φ ⊗ ψ) ↓ (ð φ : Set s) = φ ⊗ (ψ ↓ (ð φ ∩ ð ψ : Set s))
 
 
+local notation:10000 "e' " => fun (x : Set s) => e Φ s x
+
+
 private def MulOnesOne
     [DomainPreimageMulOne Φ s]
     :=
   ∀ x : Set s,
   ∀ y : Set s,
-  e x ⊗ e y = e (x ∪ y)
+  (e x : ð⁻¹ Φ s x) ⊗ (e y : ð⁻¹ Φ s y) = (e (x ∪ y) : ð⁻¹ Φ s (x ∪ y))
 
 /-
 JK:
