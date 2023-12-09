@@ -12,45 +12,38 @@ namespace ValuationAlgebras
 section
 
 
-variable (Φ s : Type) [instCommSemigroup : CommSemigroup Φ] (r : Set s)
+variable
+  (Φ s : Type)
+  [instCommSemigroup : CommSemigroup Φ]
+  (x y : Set s)
 
 
 -- Combining valuations
--- infix:70 " ⊗ " => (· * ·)
-
 
 -- Getting a valuation's domain
 class Domain where
   domain : Φ → Set s
 
 
--- notation:70 "ð " => Domain.domain
-
-
---  Marginalizing a valuation
-class Marginalize where
-  -- TODO: Actually, JK has the type more like `Π φ : Φ, 𝒫 (domain φ) → Φ`
-  -- Maybe this doesn't even matter
-  marginalize: Φ → Set s → Φ
-
-
--- infixl:70 " ↓ " => Marginalize.marginalize
-
-
--- Combining valuations
-class DomainMulUnion extends Domain Φ s where
-  domain_mul_union : ∀ φ ψ : Φ, domain (φ * ψ) = domain φ ∪ domain ψ
+notation:10000 "ð " => Domain.domain
 
 
 -- Preimages of domains
-def DomainPreimage [Domain Φ s] := { x : Φ // Domain.domain x = r }
-
+def DomainPreimage [Domain Φ s] := { φ : Φ // ð φ = x }
 
 -- Surprised that there isn't a generic coercion from a subtype to the og type...
 -- TODO: Using `CoeOut` here because `(DomainPreimage Φ s r)` is not concrete and `Coe` requires
 -- that that argument be concrete; this was an uninformed choice, am I doing something wrong?
-instance [Domain Φ s] : CoeOut (DomainPreimage Φ s r) Φ where
+instance [Domain Φ s] : CoeOut (DomainPreimage Φ s x) Φ where
   coe φ := φ.val
+
+
+-- Combining valuations
+infix:70 " ⊗ " => (· * ·)
+
+
+class DomainMulUnion extends Domain Φ s where
+  domain_mul_union : ∀ φ ψ : Φ, domain (φ ⊗ ψ) = ð φ ∪ ð ψ
 
 
 /-
@@ -58,20 +51,22 @@ The preimage of any "mul union" domain is closed under multiplication.
 -/
 lemma preimage_domain_mul_closed
     [inst : DomainMulUnion Φ s]
-    (φ : DomainPreimage Φ s r)
-    (ψ : DomainPreimage Φ s r)
-    :  Domain.domain ((φ : Φ) * ψ) = r
+    (φ : DomainPreimage Φ s x)
+    (ψ : DomainPreimage Φ s x)
+    -- At this point `⊗` hasn't formally been defined as
+    -- heterogenous multiplication between preimages, only in `Φ`
+    : ð ((φ : Φ) ⊗ (ψ : Φ)) = x
     := by
-  have hφ : Domain.domain (φ : Φ) = r := φ.property
-  have hψ : Domain.domain (ψ : Φ) = r := ψ.property
+  have hφ : ð (φ : Φ) = x := φ.property
+  have hψ : ð (ψ : Φ) = x := ψ.property
   let h := inst.domain_mul_union φ ψ
   rw [h, hφ, hψ]
-  exact Set.union_self r
+  exact Set.union_self x
   done
 
 
 instance (priority := high) [DomainMulUnion Φ s] : Mul (DomainPreimage Φ s r) where
-  mul φ ψ := ⟨(φ : Φ) * ψ, preimage_domain_mul_closed Φ s r φ ψ⟩
+  mul φ ψ := ⟨(φ : Φ) ⊗ (ψ : Φ), preimage_domain_mul_closed Φ s r φ ψ⟩
 
 
 instance [DomainMulUnion Φ s] : CommSemigroup (DomainPreimage Φ s r) where
@@ -91,7 +86,7 @@ instance (priority := mid)
     : HMul (DomainPreimage Φ s x) (DomainPreimage Φ s y) (DomainPreimage Φ s (x ∪ y))
     where
   hMul φ ψ := ⟨
-    (φ : Φ) * ψ,
+    (φ : Φ) ⊗ (ψ : Φ),
     by
       convert DomainMulUnion.domain_mul_union (φ : Φ) (ψ : Φ)
       · rw [φ.property]
@@ -104,12 +99,26 @@ class DomainPreimageMulOne extends DomainMulUnion Φ s where
   mul_one r : ∀ φ : DomainPreimage Φ s r, (one r) * φ = φ
 
 
+set_option quotPrecheck false
+notation:10000 "e " => fun x => (DomainPreimageMulOne.one x : DomainPreimage Φ s x)
+
+
+--  Marginalizing a valuation
+class Marginalize where
+  -- TODO: Actually, JK has the type more like `Π φ : Φ, 𝒫 (domain φ) → Φ`
+  -- Maybe this doesn't even matter
+  marginalize: Φ → Set s → Φ
+
+
+infixl:70 " ↓ " => Marginalize.marginalize
+
+
 private def DomainMarginalize
     [Domain Φ s]
     [Marginalize Φ s]
     : Prop
     :=
-  ∀ x : Set s, ∀ φ : Φ, Domain.domain (Marginalize.marginalize φ x) = x
+  ∀ x : Set s, ∀ φ : Φ, ð (φ ↓ x) = x
 
 
 private def MarginalizeTrans
@@ -117,24 +126,23 @@ private def MarginalizeTrans
     :=
   ∀ φ : Φ,
   ∀ x y : Set s,
-  x ⊆ y →  Marginalize.marginalize φ x = Marginalize.marginalize (Marginalize.marginalize φ y) x
+  x ⊆ y →  φ ↓ x = (φ ↓ y) ↓ x
 
 
 private def MulMarginalize
     [Domain Φ s]
-    [inst : Marginalize Φ s]
+    [Marginalize Φ s]
     :=
   ∀ φ ψ : Φ,
-  @Marginalize.marginalize Φ s inst (φ * ψ) (Domain.domain φ) = φ * (@Marginalize.marginalize Φ s inst ψ ((Domain.domain φ) ∩ (Domain.domain ψ)))
+  (φ ⊗ ψ) ↓ (ð φ : Set s) = φ ⊗ (ψ ↓ (ð φ ∩ ð ψ : Set s))
 
 
 private def MulOnesOne
-    [inst : DomainPreimageMulOne Φ s]
+    [DomainPreimageMulOne Φ s]
     :=
   ∀ x : Set s,
   ∀ y : Set s,
-  let one := @DomainPreimageMulOne.one Φ s instCommSemigroup inst
-  (one x) * (one y) = one (x ∪ y)
+  e x ⊗ e y = e (x ∪ y)
 
 /-
 JK:
