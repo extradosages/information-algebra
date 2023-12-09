@@ -4,10 +4,6 @@ import Mathlib.Tactic.LibrarySearch
 
 /-
 TODO: Look up module docstring conventions
-TODO: Add a namespace
-TODO: Converge on good JK alias naming conventions (ex: `_jk`)
-TODO: Fix naming conventions
-TODO: Examine necessity and utility of the general typeclassing pattern here
 -/
 
 namespace ValuationAlgebras
@@ -16,11 +12,11 @@ namespace ValuationAlgebras
 section
 
 
-variable (Φ s : Type) [CommSemigroup Φ] (r : Set s)
+variable (Φ s : Type) [instCommSemigroup : CommSemigroup Φ] (r : Set s)
 
 
 -- Combining valuations
-infix:70 " ⊗ " => (· * ·)
+-- infix:70 " ⊗ " => (· * ·)
 
 
 -- Getting a valuation's domain
@@ -28,7 +24,7 @@ class Domain where
   domain : Φ → Set s
 
 
-notation:70 "ð " => Domain.domain
+-- notation:70 "ð " => Domain.domain
 
 
 --  Marginalizing a valuation
@@ -38,14 +34,12 @@ class Marginalize where
   marginalize: Φ → Set s → Φ
 
 
-infixl:70 " ↓ " => Marginalize.marginalize
+-- infixl:70 " ↓ " => Marginalize.marginalize
 
 
 -- Combining valuations
 class DomainMulUnion extends Domain Φ s where
-  -- TODO: Not in love with this leading underscore; I'd like to keep those to aliases for
-  -- terms that align with what JK uses in his book
-  _mul_union : ∀ φ ψ : Φ, domain (φ * ψ) =  domain φ ∪ domain ψ
+  domain_mul_union : ∀ φ ψ : Φ, domain (φ * ψ) = domain φ ∪ domain ψ
 
 
 -- Preimages of domains
@@ -68,114 +62,46 @@ lemma preimage_domain_mul_closed
     (ψ : DomainPreimage Φ s r)
     :  Domain.domain ((φ : Φ) * ψ) = r
     := by
-  have hφ : Domain.domain φ.val = r := φ.property
-  have hψ : Domain.domain ψ.val = r := ψ.property
-  let h := inst._mul_union φ.val ψ.val
+  have hφ : Domain.domain (φ : Φ) = r := φ.property
+  have hψ : Domain.domain (ψ : Φ) = r := ψ.property
+  let h := inst.domain_mul_union φ ψ
   rw [h, hφ, hψ]
   exact Set.union_self r
   done
 
 
--- This _should_ make syntax easier...
-instance [DomainMulUnion Φ s] : Mul (DomainPreimage Φ s r) where
+instance (priority := high) [DomainMulUnion Φ s] : Mul (DomainPreimage Φ s r) where
   mul φ ψ := ⟨(φ : Φ) * ψ, preimage_domain_mul_closed Φ s r φ ψ⟩
 
 
--- TODO: This is probably superfluous
-instance [DomainMulUnion Φ s] : Semigroup (DomainPreimage Φ s r) where
+instance [DomainMulUnion Φ s] : CommSemigroup (DomainPreimage Φ s r) where
   mul_assoc := by
     intros φ ψ ϕ
     apply Subtype.ext_iff_val.mpr
     apply Semigroup.mul_assoc
+  mul_comm := by
+    intros φ ψ
+    apply Subtype.ext_iff_val.mpr
+    apply CommSemigroup.mul_comm
 
 
-private def domain_preimage_mul_left_one [DomainMulUnion Φ s] (e : DomainPreimage Φ s r) :=
-  ∀ φ : DomainPreimage Φ s r,
-    e * φ = φ
-
-
-private def DomainPreimageMulRightOne [DomainMulUnion Φ s] (e : DomainPreimage Φ s r) :=
-  ∀ φ : DomainPreimage Φ s r,
-    φ * e = φ
-
-
--- TODO: This could have a better name
-private def DomainPreimageMulOne' [DomainMulUnion Φ s] (e : DomainPreimage Φ s r) :=
- domain_preimage_mul_left_one Φ s r e ∧ DomainPreimageMulRightOne Φ s r e
-
-
-private def DomainPreimageMulOne [DomainMulUnion Φ s] := { e : DomainPreimage Φ s r // DomainPreimageMulOne' Φ s r e }
-
-
--- TODO: Should I prefer `Coe` here? It would probably work
-instance [DomainMulUnion Φ s] : CoeOut (DomainPreimageMulOne Φ s r) (DomainPreimage Φ s r) where
-  coe e := e.val
-
-
--- Note that at this point I'm clamboring for better names
-class DomainPreimageMulOneClass extends DomainMulUnion Φ s where
-  one (r : Set s) : DomainPreimageMulOne Φ s r
-
-
--- Tangential proof for fun
-lemma domain_preimage_left_one_eq_right_one
+instance (priority := mid)
     [DomainMulUnion Φ s]
-    (eLeft : DomainPreimage Φ s r)
-    (h_left : domain_preimage_mul_left_one Φ s r eLeft)
-    (eRight : DomainPreimage Φ s r)
-    (h_right : DomainPreimageMulRightOne Φ s r eRight)
-    : (eLeft : Φ) = eRight
-    := by
-  have h_val : eLeft.val = eRight.val := by
-    conv =>
-      rhs
-      rw [← h_left eRight]
-    conv =>
-      lhs
-      rw [← h_right eLeft]
-  exact h_val
-  done
-
-
--- Seems like it would be necessary for choice procedures, but haven't needed to invoke this
--- yet...
-lemma domain_preimage_left_one_unique
-    [DomainMulUnion Φ s]
-    (e₁ : DomainPreimageMulOne Φ s r)
-    (e₂ : DomainPreimageMulOne Φ s r)
-    : (e₁ : Φ) = e₂
-    := by
-  let h₁_left := e₁.property.left
-  let h₂_right := e₂.property.right
-  conv =>
-    rhs
-    rw [← h₁_left e₂]
-  conv =>
-    lhs
-    rw [← h₂_right e₁]
-  done
-
-
--- TODO: Is this more convenient as a class for making a `Monoid` instance?
-private def DomainPreimageMonoid [DomainMulUnion Φ s] := Π r : Set s, DomainPreimageMulOne Φ s r
-
-
--- TODO: Wow, this is syntactically horrible; speaks an issue in my comfort with type classes and possibly in the implementation
--- strategy we have set up right now
-instance
-    [instCommSemigroup : CommSemigroup Φ]
-    [instDomainPreimageMulOneClass : @DomainPreimageMulOneClass Φ s instCommSemigroup]
-    : Monoid (@DomainPreimage Φ s r instDomainPreimageMulOneClass.toDomain)
+    (x y : Set s)
+    : HMul (DomainPreimage Φ s x) (DomainPreimage Φ s y) (DomainPreimage Φ s (x ∪ y))
     where
-  one :=
-    let e := @DomainPreimageMulOneClass.one Φ s instCommSemigroup instDomainPreimageMulOneClass r
-    e.val
-  one_mul :=
-    let e := @DomainPreimageMulOneClass.one Φ s instCommSemigroup instDomainPreimageMulOneClass r
-    e.property.left
-  mul_one :=
-    let e := @DomainPreimageMulOneClass.one Φ s instCommSemigroup instDomainPreimageMulOneClass r
-    e.property.right
+  hMul φ ψ := ⟨
+    (φ : Φ) * ψ,
+    by
+      convert DomainMulUnion.domain_mul_union (φ : Φ) (ψ : Φ)
+      · rw [φ.property]
+      · rw [ψ.property]
+  ⟩
+
+
+class DomainPreimageMulOne extends DomainMulUnion Φ s where
+  one r : DomainPreimage Φ s r
+  mul_one r : ∀ φ : DomainPreimage Φ s r, (one r) * φ = φ
 
 
 private def DomainMarginalize
@@ -189,97 +115,70 @@ private def DomainMarginalize
 private def MarginalizeTrans
     [Marginalize Φ s]
     :=
-  ∀ φ : Φ, ∀ x y : Set s, x ⊆ y →  Marginalize.marginalize φ x = Marginalize.marginalize (Marginalize.marginalize φ y) x
+  ∀ φ : Φ,
+  ∀ x y : Set s,
+  x ⊆ y →  Marginalize.marginalize φ x = Marginalize.marginalize (Marginalize.marginalize φ y) x
 
 
 private def MulMarginalize
     [Domain Φ s]
-    [Marginalize Φ s]
+    [inst : Marginalize Φ s]
     :=
   ∀ φ ψ : Φ,
-  ∀ x y : Set s,
-    Domain.domain φ = x ∧ Domain.domain ψ = y →
-    Marginalize.marginalize (φ * ψ) x = φ * (Marginalize.marginalize ψ (x ∩ y))
-
-
--- TODO: There's something wrong with the naming convention here
-private def mulOnes
-    [DomainMulUnion Φ s]
-    (x : Set s)
-    (ex : DomainPreimageMulOne Φ s x)
-    (y : Set s)
-    (ey : DomainPreimageMulOne Φ s y)
-    : DomainPreimage Φ s (x ∪ y)
-    :=
-  let ex' := ex.val.val
-  let ey' := ey.val.val
-  let hx : Domain.domain (ex : Φ) = x := (ex : DomainPreimage Φ s x).property
-  let hy : Domain.domain (ey : Φ) = y := (ey : DomainPreimage Φ s y).property
-  let h : Domain.domain ((ex : Φ) * ey) = x ∪ y := by
-    rw [DomainMulUnion._mul_union, hx, hy]
-  ⟨ex' * ey', h⟩
+  @Marginalize.marginalize Φ s inst (φ * ψ) (Domain.domain φ) = φ * (@Marginalize.marginalize Φ s inst ψ ((Domain.domain φ) ∩ (Domain.domain ψ)))
 
 
 private def MulOnesOne
-    [DomainMulUnion Φ s]
+    [inst : DomainPreimageMulOne Φ s]
     :=
   ∀ x : Set s,
-  ∀ ex : DomainPreimageMulOne Φ s x,
   ∀ y : Set s,
-  ∀ ey : DomainPreimageMulOne Φ s y,
-  DomainPreimageMulOne' Φ s (x ∪ y) (mulOnes Φ s x ex y ey)
-
+  let one := @DomainPreimageMulOne.one Φ s instCommSemigroup inst
+  (one x) * (one y) = one (x ∪ y)
 
 /-
 JK:
 We define now formally a valuation algebra by a system of axioms.
 -/
-class ValuationAlgebra extends DomainMulUnion Φ s, Marginalize Φ s where
+class ValuationAlgebra extends DomainPreimageMulOne Φ s, Marginalize Φ s where
   /-
   JK:
   Axiom 1, "Semigroup"
   Axiom (1) says that Φ is a commutative semigroup under combination and that a neutral element is adjoined for every sub-semigroup Φₛ of valuations for s. Note that the neutral element is unique. If there would be a second one, say e'ₛ, then we have e'ₛ = eₛ ⊗ e'ₛ = eₛ.
   -/
-  domain_preimage_monoid := DomainPreimageMonoid Φ s
-  _jk_axiom_1 := domain_preimage_monoid
-  _jk_semigroup := domain_preimage_monoid
+  -- Via `DomainPreimageMulOne.one`, `DomainPreimageMulOne.mul_one`, the `DomainPreimage` instance of `CommSemigroup`
+
   /-
   JK:
   Axiom 2, "Labeling"
   The labeling axiom says that under combination the domains of the factors are joined.
   -/
-  domain_mul_union := _mul_union
-  _jk_axiom_2 := domain_mul_union
-  _jk_labelling := domain_mul_union
+  -- Via `DomainMulUnion.domain_mul_union`
+
   /-
   JK:
   Axiom 3, "Marginalization"
   The marginalization axioms says that marginalization to a domain x yields a valuation for this domain.
   -/
   domain_marginalize : DomainMarginalize Φ s
-  _jk_axiom_3 := domain_marginalize
-  _jk_marginalization := domain_marginalize
+
   /-
   JK:
   Axiom 4, "Transitivity"
   The transitivity axiom tells us that marginalization to some domain x can be done in two (or more) steps by intermediate marginalization to intermediate domains.
   -/
   marginalize_trans : MarginalizeTrans Φ s
-  _jk_axiom_4 := marginalize_trans
-  _jk_transitivity := marginalize_trans
+
   /-
   JK:
   Axiom 5, "Combination"
   The combination axioms assures that in order to marginalize to a domain of one of the factors of a combination it is not necessary to compute first the combination, but that we can as well first marginalize the other factor to the domain of the first one and then combine the two valuations. It means that we need in fact not leave the domains of the two factors to compute the marginal of the combination. It is essentially this axiom which allows local computation.
   -/
   mul_marginalize : MulMarginalize Φ s
-  _jk_axiom_5 := mul_marginalize
-  _jk_combination := mul_marginalize
+
   /-
   JK:
   Axiom 6, "Neutrality"
   The neutrality axiom finally specifies combination of neutral elements to give neutral elements.
   -/
-  mulOnesOne : MulOnesOne Φ s
-  _jk_axiom_6 := mulOnes
-  _jk_neutrality := mulOnes
+  mul_ones_one : MulOnesOne Φ s
