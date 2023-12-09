@@ -10,11 +10,17 @@ TODO: Fix naming conventions
 TODO: Examine necessity and utility of the general typeclassing pattern here
 -/
 
-variable {α β : Type} (Φ : Type) (s : Type) (r : Set s) [Semigroup Φ]
+namespace ValuationAlgebras
+
+
+section
+
+
+variable (Φ s : Type) [CommSemigroup Φ] (r : Set s)
 
 
 -- Combining valuations
-local infix:70 "⊗" => (. * .)
+infix:70 " ⊗ " => (· * ·)
 
 
 -- Getting a valuation's domain
@@ -22,16 +28,21 @@ class Domain where
   domain : Φ → Set s
 
 
+notation:70 "ð " => Domain.domain
+
+
 --  Marginalizing a valuation
 class Marginalize where
+  -- TODO: Actually, JK has the type more like `Π φ : Φ, 𝒫 (domain φ) → Φ`
+  -- Maybe this doesn't even matter
   marginalize: Φ → Set s → Φ
 
 
-local infixl:70 "↓" => Marginalize.marginalize
+infixl:70 " ↓ " => Marginalize.marginalize
 
 
 -- Combining valuations
-private class DomainMulUnion extends Domain Φ s where
+class DomainMulUnion extends Domain Φ s where
   -- TODO: Not in love with this leading underscore; I'd like to keep those to aliases for
   -- terms that align with what JK uses in his book
   _mul_union : ∀ φ ψ : Φ, domain (φ * ψ) =  domain φ ∪ domain ψ
@@ -152,18 +163,18 @@ private def DomainPreimageMonoid [DomainMulUnion Φ s] := Π r : Set s, DomainPr
 -- TODO: Wow, this is syntactically horrible; speaks an issue in my comfort with type classes and possibly in the implementation
 -- strategy we have set up right now
 instance
-    [instSemigroup : Semigroup Φ]
-    [instDomainPreimageMulOneClass : @DomainPreimageMulOneClass Φ s instSemigroup]
+    [instCommSemigroup : CommSemigroup Φ]
+    [instDomainPreimageMulOneClass : @DomainPreimageMulOneClass Φ s instCommSemigroup]
     : Monoid (@DomainPreimage Φ s r instDomainPreimageMulOneClass.toDomain)
     where
   one :=
-    let e := @DomainPreimageMulOneClass.one Φ s instSemigroup instDomainPreimageMulOneClass r
+    let e := @DomainPreimageMulOneClass.one Φ s instCommSemigroup instDomainPreimageMulOneClass r
     e.val
   one_mul :=
-    let e := @DomainPreimageMulOneClass.one Φ s instSemigroup instDomainPreimageMulOneClass r
+    let e := @DomainPreimageMulOneClass.one Φ s instCommSemigroup instDomainPreimageMulOneClass r
     e.property.left
   mul_one :=
-    let e := @DomainPreimageMulOneClass.one Φ s instSemigroup instDomainPreimageMulOneClass r
+    let e := @DomainPreimageMulOneClass.one Φ s instCommSemigroup instDomainPreimageMulOneClass r
     e.property.right
 
 
@@ -182,15 +193,13 @@ private def MarginalizeTrans
 
 
 private def MulMarginalize
-    [instDomain : Domain Φ s]
+    [Domain Φ s]
     [Marginalize Φ s]
     :=
   ∀ φ ψ : Φ,
-  -- Using instance here so that other instances can be inferred
-  let r₁ := instDomain.domain φ
-  let r₂ := Domain.domain ψ
-  let r₃ := r₁ ∩ r₂
-  Marginalize.marginalize (φ * ψ) r₁ = φ * (Marginalize.marginalize ψ r₃)
+  ∀ x y : Set s,
+    Domain.domain φ = x ∧ Domain.domain ψ = y →
+    Marginalize.marginalize (φ * ψ) x = φ * (Marginalize.marginalize ψ (x ∩ y))
 
 
 -- TODO: There's something wrong with the naming convention here
@@ -225,7 +234,7 @@ private def MulOnesOne
 JK:
 We define now formally a valuation algebra by a system of axioms.
 -/
-class LabeledValuationAlgebra extends DomainMulUnion Φ s, Marginalize Φ s where
+class ValuationAlgebra extends DomainMulUnion Φ s, Marginalize Φ s where
   /-
   JK:
   Axiom 1, "Semigroup"
