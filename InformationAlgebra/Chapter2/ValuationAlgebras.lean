@@ -140,15 +140,13 @@ private def MulMarginalize
   (φ ⊗ ψ) ↓ (ð φ : Set s) = φ ⊗ (ψ ↓ (ð φ ∩ ð ψ : Set s))
 
 
-local notation:10000 "e' " => fun (x : Set s) => e Φ s x
-
-
 private def MulOnesOne
     [DomainPreimageMulOne Φ s]
     :=
   ∀ x : Set s,
   ∀ y : Set s,
   (e x : ð⁻¹ Φ s x) ⊗ (e y : ð⁻¹ Φ s y) = (e (x ∪ y) : ð⁻¹ Φ s (x ∪ y))
+
 
 /-
 JK:
