@@ -9,9 +9,6 @@ TODO: Look up module docstring conventions
 namespace ValuationAlgebras
 
 
-section
-
-
 variable
   (Φ s : Type)
   [instCommSemigroup : CommSemigroup Φ]
@@ -43,7 +40,7 @@ instance [Domain Φ s] : CoeOut (ð⁻¹ Φ s x) Φ where
 
 
 -- Combining valuations
-infix:70 " ⊗ " => (· * ·)
+infix:70 " ⊗ " => Mul.mul
 
 
 class DomainMulUnion extends Domain Φ s where
@@ -59,7 +56,7 @@ lemma preimage_domain_mul_closed
     (ψ : ð⁻¹ Φ s x)
     -- At this point `⊗` hasn't formally been defined as
     -- heterogenous multiplication between preimages, only in `Φ`
-    : ð ((φ : Φ) ⊗ (ψ : Φ)) = x
+    : ð ((φ : Φ) ⊗ ψ) = x
     := by
   have hφ : ð (φ : Φ) = x := φ.property
   have hψ : ð (ψ : Φ) = x := ψ.property
@@ -70,7 +67,7 @@ lemma preimage_domain_mul_closed
 
 
 instance (priority := high) [DomainMulUnion Φ s] : Mul (ð⁻¹ Φ s r) where
-  mul φ ψ := ⟨(φ : Φ) ⊗ (ψ : Φ), preimage_domain_mul_closed Φ s r φ ψ⟩
+  mul φ ψ := ⟨(φ : Φ) ⊗ ψ, preimage_domain_mul_closed Φ s r φ ψ⟩
 
 
 instance [DomainMulUnion Φ s] : CommSemigroup (ð⁻¹ Φ s r) where
@@ -90,7 +87,7 @@ instance (priority := mid)
     : HMul (ð⁻¹ Φ s x) (ð⁻¹ Φ s y) (ð⁻¹ Φ s (x ∪ y))
     where
   hMul φ ψ := ⟨
-    (φ : Φ) ⊗ (ψ : Φ),
+    (φ : Φ) ⊗ ψ,
     by
       convert DomainMulUnion.domain_mul_union (φ : Φ) (ψ : Φ)
       · rw [φ.property]
@@ -98,9 +95,12 @@ instance (priority := mid)
   ⟩
 
 
+infix :70 " ⊗ₕ " => HMul.hMul
+
+
 class DomainPreimageMulOne extends DomainMulUnion Φ s where
   one r : ð⁻¹ Φ s r
-  mul_one r : ∀ φ : ð⁻¹ Φ s r, (one r) * φ = φ
+  mul_one r : ∀ φ : ð⁻¹ Φ s r, (one r) ⊗ φ = φ
 
 
 notation:10000 "e " => DomainPreimageMulOne.one
@@ -145,7 +145,7 @@ private def MulOnesOne
     :=
   ∀ x : Set s,
   ∀ y : Set s,
-  (e x : ð⁻¹ Φ s x) ⊗ (e y : ð⁻¹ Φ s y) = (e (x ∪ y) : ð⁻¹ Φ s (x ∪ y))
+  (e x : ð⁻¹ Φ s x) ⊗ₕ (e y : ð⁻¹ Φ s y) = (e (x ∪ y) : ð⁻¹ Φ s (x ∪ y))
 
 
 /-
@@ -194,3 +194,6 @@ class ValuationAlgebra extends DomainPreimageMulOne Φ s, Marginalize Φ s where
   The neutrality axiom finally specifies combination of neutral elements to give neutral elements.
   -/
   mul_ones_one : MulOnesOne Φ s
+
+
+end ValuationAlgebras
