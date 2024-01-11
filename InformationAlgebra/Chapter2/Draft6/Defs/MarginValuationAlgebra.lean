@@ -46,7 +46,6 @@ protected def WeakMulOneStatement
   MarginValuationAlgebra.StrongMulOneStatement φ le_sup_left
 
 
-
 protected def StrongMarginMulStatement
     [Lattice D] [GMargin Φ] [GMul Φ] [GOne Φ] (p : x ≤ x ⊔ y) (q : x ⊓ y ≤ y) (r : x ≤ x ⊔ x ⊓ y) :=
   (φ ⊗ ψ ⇓ x, p) = ((φ ⊗ (ψ ⇓ x ⊓ y, q)) ⇓ x, r)

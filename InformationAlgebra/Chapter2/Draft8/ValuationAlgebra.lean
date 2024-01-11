@@ -35,8 +35,7 @@ class GOne where
   one x : Φ x
 
 
-def gOne {Φ : D → Type*} [GOne Φ] (x : D) : ValuationAlgebra Φ := ValuationAlgebra.mk x (GOne.one x)
-
+def gOne {Φ : D → Type*} [GOne Φ] (x : D) : ValuationAlgebra Φ := ValuationAlgebra.mk (GOne.one x)
 
 
 notation:70 "e " x => gOne x
@@ -47,15 +46,24 @@ class GMul [DistribLattice D] where
   mul : Φ x → Φ y → Φ (x ⊔ y)
 
 
-example [GMul Φ] :
-
 
 infixl:70 (priority := high) " ⊗ " => GMul.mul
 
 
+/-
+x ≤ z ≤ x ⊔ y
+(φ ⊗ ψ) ↓ z = (φ ⊗ (ψ ↓ z ⊓ y))
+z ≤ x
+(φ ⊗ ψ) ↓ z = (φ ⊗ (ψ ↓ x ⊓ y)) ↓ z
+(φ ↓ a) ⊗ (φ ↓ b) ; a ⊔ b
+φ' := (φ ↓ a), ψ' := (ψ ↓ b)
+φ' ⊗ ψ' ↓
+-/
+
+
 /-- `GMul` implies `Mul (ValuationAlgebra Φ)` -/
 instance GMul.toMul [DistribLattice D] [GMul Φ] : Mul (ValuationAlgebra Φ) :=
-  ⟨fun ⟨x, φ, x', _⟩ ⟨y, ψ, y', _⟩ ↦ ⟨_, GMul.mul φ ψ, _, _⟩⟩
+  ⟨fun ⟨x, φ, x', _⟩ ⟨y, ψ, y', _⟩ ↦ ⟨x ⊔ (y , GMul.mul φ ψ, _, _⟩⟩
 
 
 -- TODO: Why do we have this?

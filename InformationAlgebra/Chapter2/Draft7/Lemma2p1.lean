@@ -16,11 +16,10 @@ variable
   (ψ : Φ y)
 
 
-theorem proof_2p1p2 (q : z ≤ x) : (φ ⊗ ψ) ↓ (le_trans q sup_le_left) = (φ ⊗ (ψ ↓ (inf_le_right : x ⊓ y ≤ y)) ↓ q :=
+theorem proof_2p1p2
+    (q : z ≤ x)
+    :
+    (φ ⊗ ψ) ↓ (le_trans q sup_le_left) = (φ ⊗ (ψ ↓ (inf_le_right : x ⊓ y ≤ y))) ↓ (le_trans q
+    := by
   rw []
-  done
-
-
-theorem proof_2p1p1 : (φ ⊗ ψ) ↓ (x ⊓ y) = (φ ↓ x ⊓ y) ⊗ (ψ ↓ x ⊓ y) :=
-  sorry
   done

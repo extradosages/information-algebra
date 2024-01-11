@@ -94,7 +94,7 @@ notation:70 "(" φ " ↓ " y ", " p ")" => GMargin.margin φ y p
 
 
 def StrongMarginTransStatement {Φ : D → Type*} [LE D] [GMargin Φ] (φ : Φ x) (y z : D) (p : y ≤ x) (q : z ≤ y) (r : z ≤ x) := ((φ ↓ y, p) ↓ z, q) = (φ ↓ z, r)
-def StrongMarginMulStatement {Φ : D → Type*} [Lattice D] [GCommSemigroup Φ] [GMargin Φ] (φ : Φ x) (ψ : Φ y) (p : x ≤ x ⊔ y) (q : x ⊓ y ≤ y) (r : x ⊔ x ⊓ y = x) :=  (φ ⊗ ψ) ↓ p = r ▸ (φ ⊗ (ψ ↓ q))
+def StrongMarginMulStatement {Φ : D → Type*} [Lattice D] [GCommSemigroup Φ] [GMargin Φ] (φ : Φ x) (ψ : Φ y) (p : x ≤ x ⊔ y) (q : x ⊓ y ≤ y) (r : x ⊔ x ⊓ y = x) :=  (φ ⊗ ψ ↓ x, p) = r ▸ (φ ⊗ (ψ ↓ x ⊓ y, q))
 
 
 class GStrongMargin [Lattice D] [GCommSemigroup Φ] extends GMargin Φ where
