@@ -52,11 +52,11 @@ protected def StrongMarginMulStatement
 
 
 protected def WeakMarginMulStatement
-    [DistribLattice D] [GMargin Φ] [GMul Φ] [GOne Φ] :=
+    [Lattice D] [GMargin Φ] [GMul Φ] [GOne Φ] :=
   MarginValuationAlgebra.StrongMarginMulStatement φ ψ le_sup_left inf_le_right le_sup_left
 
 
-class CastValuationAlgebra [DistribLattice D] extends GMul Φ, GOne Φ, GMarginRefl Φ where
+class MarginValuationAlgebra [Lattice D] (Φ : D → Type*) extends GMul Φ, GOne Φ, GMarginRefl Φ where
   /-- Inter-grade multiplication is commutative -/
   mul_comm {x y : D} (φ : Φ x) (ψ : Φ y) (p : x ⊔ y ≤ y ⊔ x) : MarginValuationAlgebra.StrongMulCommStatement φ ψ p
   /-- Inter-grade multiplication is associative -/
@@ -71,7 +71,7 @@ class CastValuationAlgebra [DistribLattice D] extends GMul Φ, GOne Φ, GMarginR
   margin_mul {x y : D} (φ : Φ x) (ψ : Φ y) (p : x ≤ x ⊔ y) (q : x ⊓ y ≤ y) (r : x ≤ x ⊔ x ⊓ y) : MarginValuationAlgebra.StrongMarginMulStatement φ ψ p q r
 
 
-class WeakCastValuationAlgebra [DistribLattice D] extends GMul Φ, GOne Φ, GMarginRefl Φ where
+class MarginCastValuationAlgebra [Lattice D] (Φ : D → Type*) extends GMul Φ, GOne Φ, GMarginRefl Φ where
   /-- Inter-grade multiplication is commutative -/
   mul_comm {x y : D} (φ : Φ x) (ψ : Φ y) : MarginValuationAlgebra.WeakMulCommStatement φ ψ
   /-- Inter-grade multiplication is associative -/
