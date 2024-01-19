@@ -117,16 +117,20 @@ protected inductive HyperTree' X where
   | cons (ℋ : HyperGraph X) (t : DisjointTwig ℋ) : HyperGraph.HyperTree' X
 
 
+/-- A hypertree is a hypergraph that can be constructed step-by-step by adding twigs. -/
 def HyperTree := HyperGraph.HyperTree'
 
 
+/-- Any hypertree is also a hypergraph. -/
 instance {X} : Coe (HyperTree X) (HyperGraph X) where
   coe 𝒯 := match 𝒯 with
     | HyperGraph.HyperTree'.nil r => ⟨{r}, Finset.singleton_nonempty r⟩
     | HyperGraph.HyperTree'.cons ℋ t => ⟨Finset.cons t.1 ℋ.1 t.2.left, Finset.nonempty_cons t.2.left⟩
 
 
+/-- Any hypergraph consisting of a lone hyperedge is a hypertree. -/
 def HyperTree.nil {X} := @HyperGraph.HyperTree'.nil X
 
 
+/-- Attach a twig onto a hypertree to produce a new hypertree. -/
 def HyperTree.cons {X} (ℋ : HyperTree X) (t : @DisjointTwig X ℋ) := HyperGraph.HyperTree'.cons ℋ t
