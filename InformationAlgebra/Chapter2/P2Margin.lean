@@ -33,6 +33,9 @@ notation:10000 "(" φ " ⇓ " x ", " p ")" => GMargin.margin φ x p
 notation:70 φ " ↓ " x => (φ ⇓ x, _)
 
 
+section MarginTrans
+
+
 protected def StrongMarginTransStatement
     [Preorder D]
     [GMargin Φ]
@@ -48,3 +51,6 @@ protected def StrongMarginTransStatement
 protected def WeakMarginTransStatement
     [Preorder D] [GMargin Φ] {x y : D} (φ : Φ x) (h_le₁ : z ≤ y) (h_le₂ : y ≤ x) :=
   ValuationAlgebra.StrongMarginTransStatement Φ φ h_le₁ h_le₂ default
+
+
+end MarginTrans
