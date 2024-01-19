@@ -7,8 +7,8 @@ import Mathlib
 This file establishes some basic definitions
 
 - `HyperGraph X`
-- `Branch ℋ b t` and `Twig ℋ t b`
-- `Hypertree ℋ`
+- `Branch ℋ b t`
+- `Hypertree X`
 -/
 
 
@@ -112,6 +112,10 @@ def DisjointTwig
   { t : HyperEdge X // HyperGraph.DisjointTwig' ℋ t }
 
 
+instance {X} {ℋ : HyperGraph X} : CoeOut (DisjointTwig ℋ) (HyperEdge X) where
+  coe t := t.val
+
+
 protected inductive HyperTree' X where
   | nil (r : HyperEdge X) : HyperGraph.HyperTree' X
   | cons (ℋ : HyperGraph X) (t : DisjointTwig ℋ) : HyperGraph.HyperTree' X
@@ -132,5 +136,47 @@ instance {X} : Coe (HyperTree X) (HyperGraph X) where
 def HyperTree.nil {X} := @HyperGraph.HyperTree'.nil X
 
 
+notation:70 "[" r "]ₜ" => HyperTree.nil r
+
+
 /-- Attach a twig onto a hypertree to produce a new hypertree. -/
 def HyperTree.cons {X} (ℋ : HyperTree X) (t : @DisjointTwig X ℋ) := HyperGraph.HyperTree'.cons ℋ t
+
+
+infixr:70 " ::ₜ " => HyperTree.cons
+
+
+def HyperTreeForGraph (ℋ : HyperGraph X) := { 𝒯 : HyperTree X // (𝒯 : HyperGraph X) = ℋ }
+
+
+instance : Singleton (HyperEdge X) (HyperTree X) where
+  singleton r := [r]ₜ
+
+
+instance : Membership (HyperEdge X) (HyperTree X) where
+  mem a 𝒯 := match 𝒯 with
+    | HyperGraph.HyperTree'.nil b => a = b
+    | HyperGraph.HyperTree'.cons 𝒯' b => a = b ∨ a ∈ 𝒯'
+
+
+theorem mem_tree_iff_mem_graph (a : HyperEdge X) (𝒯 : HyperTree X) : a ∈ 𝒯 ↔ a ∈ (𝒯 : HyperGraph X) := by
+  sorry
+  done
+
+
+-- theorem eq_singleton_iff_unique_mem {s : HyperTree X} {a : HyperEdge X} : s = {a} ↔ a ∈ s ∧ ∀ x ∈ s, x = a := by
+--   constructor <;> intro t
+--   · rw [t]
+--     exact ⟨Finset.mem_singleton_self _, fun _ => Finset.mem_singleton.1⟩
+--   · ext
+--     rw [Finset.mem_singleton]
+--     exact ⟨t.right _, fun r => r.symm ▸ t.left⟩
+
+
+-- theorem singleton_iff_unique_mem (s : Finset α) : (∃ a, s = {a}) ↔ ∃! a, a ∈ s := by
+--   simp only [eq_singleton_iff_unique_mem, ExistsUnique]
+
+
+theorem two_elt_hypertree_lemma (𝒯 : HyperTree X) (p : 𝒯 = ([a₁]ₜ) ::ₜ a₂) : a₁ ∩ a₂ ≠ ∅ := by
+  sorry
+  done
