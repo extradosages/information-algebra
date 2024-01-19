@@ -1,6 +1,6 @@
 import InformationAlgebra.Chapter2.Draft6.Defs.CastValuationAlgebra
 
-/-
+/-!
 # Margin Refl Counterexample
 
 This file attempts to demonstrate the counterexample to the generic assertion that marginalizing a
