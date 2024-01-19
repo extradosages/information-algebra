@@ -35,9 +35,12 @@ protected def Intersecting {X} (b : HyperEdge X) (t : HyperEdge X) := b ∩ t �
 
 
 /-- In a hypergraph, one edge dominates another if the intersection of the latter with
-ANY other edge in the hypergraph is contained within the intersection of the former with that
-edge. -/
-protected def Dominating
+any other *distinct* edge in the hypergraph is contained within the intersection of the former with
+that edge.
+
+The emphasis on distinctness is important, because it allows a dominated edge to not be a subset
+of a dominating edge. -/
+protected def Dominates
     {X}
     (ℋ : HyperGraph X)
     (b : HyperEdge X)
@@ -45,13 +48,16 @@ protected def Dominating
     :
     Prop
     :=
-  ∀ h ∈ ℋ, h ≠ t → ∀ x ∈ t, x ∈ h → x ∈ b
+  ∀ h ∈ ℋ, h ≠ t → ∀ x ∈ t ∩ h, x ∈ b
 
 
 /-- In a hypergraph, one edge is a branch relative to another if they intersect and if the
 former dominates the latter.
 
-See `HyperGraph.Dominating`.-/
+Requiring that a dominating pair of of edges intersect in this definition eliminates the degenerate
+case of two disjoint edges in an otherwise empty hypergraph.
+
+See `HyperGraph.Dominates`.-/
 def Branch
     {X}
     (ℋ : HyperGraph X)
@@ -60,7 +66,7 @@ def Branch
     :
     Prop
     :=
-  HyperGraph.Intersecting b t ∧ HyperGraph.Dominating ℋ b t
+  HyperGraph.Intersecting b t ∧ HyperGraph.Dominates ℋ b t
 
 
 /-- In a hypergraph, the property of one edge being a twig relative to another is reciprocal to
@@ -78,8 +84,18 @@ def Twig
   Branch ℋ b t
 
 
+def Twig'
+    {X}
+    (ℋ : HyperGraph X)
+    (t : HyperEdge X)
+    :
+    Prop
+    :=
+  ∃ b ∈ ℋ, Twig ℋ t b
+
+
 /-- `HyperTree t ℋ p` means that `t` is a twig for the hypertree `ℋ` and is not already a hyperedge
 in `ℋ` (via `p`).-/
-inductive HyperTree : (t : HyperEdge X) → (ℋ : HyperGraph X) → (p : t ∉ ℋ) → Prop
-  | nil {root : HyperEdge X} : HyperTree root ∅ _
-  | cons : ∀ {a b : HyperEdge X} {ℋ : HyperGraph X}, Twig ℋ a b → HyperTree b ℋ q → HyperTree a (Set.insert b ℋ) p
+inductive HyperTree : (t : HyperEdge X) → (ℋ : HyperGraph X) → Prop
+  | nil {root : HyperEdge X} : HyperTree root ∅
+  | cons : ∀ {a : HyperEdge X} {ℋ : HyperGraph X}, Twig' ℋ a → HyperTree a ℋ
