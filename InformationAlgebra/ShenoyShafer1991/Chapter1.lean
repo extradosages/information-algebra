@@ -36,7 +36,6 @@ instance : Membership (HyperEdge X) (HyperGraph X) where
   mem b ℋ := b ∈ ℋ.val
 
 
-
 /-- In a hypergraph, one edge dominates another if the intersection of the latter with
 any other *distinct* edge in the hypergraph is contained within the intersection of the former with
 that edge.
@@ -113,44 +112,21 @@ def DisjointTwig
   { t : HyperEdge X // HyperGraph.DisjointTwig' ℋ t }
 
 
-protected theorem hyper_tree_root X : ∀ _ : HyperEdge X, True := by
-  exact fun _ ↦ trivial
-  done
+protected inductive HyperTree' X where
+  | nil (r : HyperEdge X) : HyperGraph.HyperTree' X
+  | cons (ℋ : HyperGraph X) (t : DisjointTwig ℋ) : HyperGraph.HyperTree' X
 
 
-protected def HyperTree' : (ℋ : HyperGraph X) → (Finset.Nonempty ℋ.val) → Prop :=
-  fun ⟨s, h⟩ _ ↦
-    if ∃ a : HyperEdge X, s = {a} then
-      True
-    else if ∃ (a : HyperEdge X) (hh : a ∉ s), s = (Finset.cons a s hh) then
-      HyperGraph.DisjointTwig' ⟨s, h⟩ a
-    else
-      False
+def HyperTree := HyperGraph.HyperTree'
 
 
-/-
-⊢ ∀ {α : Type u_4} {p : (s : Finset α) → Finset.Nonempty s → Prop},
-  (∀ (a : α), p {a} _) →
-    (∀ ⦃a : α⦄ (s : Finset α) (h : a ∉ s) (hs : Finset.Nonempty s), p s hs → p (Finset.cons a s h) _) →
-      ∀ {s : Finset α} (hs : Finset.Nonempty s), p s hs
-
--/
-/- To prove a proposition about a nonempty `s : Finset α`, it suffices to show it holds for all
-singletons and that if it holds for nonempty `t : Finset α`, then it also holds for the `Finset`
-obtained by inserting an element in `t`. -/
-#check @Finset.Nonempty.cons_induction (HyperEdge X)
+instance {X} : Coe (HyperTree X) (HyperGraph X) where
+  coe 𝒯 := match 𝒯 with
+    | HyperGraph.HyperTree'.nil r => ⟨{r}, Finset.singleton_nonempty r⟩
+    | HyperGraph.HyperTree'.cons ℋ t => ⟨Finset.cons t.1 ℋ.1 t.2.left, Finset.nonempty_cons t.2.left⟩
 
 
-def HyperTree (ℋ : HyperGraph X) : Prop :=
-  Finset.Nonempty.cons_induction (HyperGraph.hyper_tree_root X)
+def HyperTree.nil {X} := @HyperGraph.HyperTree'.nil X
 
 
-#check Acc
-#check Finset.cons
-
-def HyperTree (ℋ : HyperGraph X) : Prop :=
-  if ℋ = 0 then
-    False
-  else if ∃ x, ℋ = {x} then
-    True
-  else
+def HyperTree.cons {X} (ℋ : HyperTree X) (t : @DisjointTwig X ℋ) := HyperGraph.HyperTree'.cons ℋ t
