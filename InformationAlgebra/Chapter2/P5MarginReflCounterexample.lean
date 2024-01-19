@@ -43,7 +43,7 @@ def Duplicate (x : D) : Type v := (Φ x) ⊕ (Φ x)
 
 
 /-- The pathological marginalization instance. -/
-instance : GMargin (Duplicate Φ) where
+local instance : GMargin (Duplicate Φ) where
   margin φφ y p := match φφ with
     | inl φ => inl (φ ⇓ y, p)
     | inr φ => inl (φ ⇓ y, p)
@@ -68,11 +68,11 @@ TODO: This is not straightforward...
 -/
 
 
-instance : GOne (Duplicate Φ) where
+local instance : GOne (Duplicate Φ) where
   one x := inl (e x)
 
 
-instance : GCastRefl (Duplicate Φ) where
+local instance : GCastRefl (Duplicate Φ) where
   cast p φφ := match φφ with
     | inl φ => inl (GCast.cast p φ)
     | inr φ => inr (GCast.cast p φ)
@@ -81,7 +81,7 @@ instance : GCastRefl (Duplicate Φ) where
     done
 
 
-instance : GMul (Duplicate Φ) where
+local instance : GMul (Duplicate Φ) where
   mul φφ ψψ := match (φφ, ψψ) with
     | (inl φ, inl ψ) => inl (φ ⊗ ψ)
     | (inl φ, inr ψ) => inl (φ ⊗ ψ)
