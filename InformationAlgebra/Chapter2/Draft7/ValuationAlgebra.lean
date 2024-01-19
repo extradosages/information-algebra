@@ -9,20 +9,20 @@ variable
 
 
 /-- A type alias of sigma types for valuation algebras -/
-def ValuationAlgebra (Φ : D → Type*) :=
+def ValuationAlgebra₇ (Φ : D → Type*) :=
   Sigma Φ
 
 
-namespace ValuationAlgebra
+namespace ValuationAlgebra₇
 
 
 /-- Construct an element of a valuation algebra, a "valuation" -/
-def mk {Φ : D → Type*} {x : D} (φ : Φ x) : ValuationAlgebra Φ :=
+def mk {Φ : D → Type*} {x : D} (φ : Φ x) : ValuationAlgebra₇ Φ :=
   Sigma.mk x φ
 
 
 /-- Get the grade or "label" or an element of a valuation algebra -/
-def label {Φ : D → Type*} (a : ValuationAlgebra Φ) :=
+def label {Φ : D → Type*} (a : ValuationAlgebra₇ Φ) :=
   Sigma.fst a
 
 
@@ -40,10 +40,10 @@ class GOne where
   one x : Φ x
 
 
-def gOne {Φ : D → Type*} [GOne Φ] (x : D) : ValuationAlgebra Φ := ⟨x, GOne.one x⟩
+def gOne {Φ : D → Type*} [GOne Φ] (x : D) : ValuationAlgebra₇ Φ := ⟨x, GOne.one x⟩
 
 
-example  [GOne Φ] (a : ValuationAlgebra Φ) : ValuationAlgebra Φ := gOne a.fst
+example  [GOne Φ] (a : ValuationAlgebra₇ Φ) : ValuationAlgebra₇ Φ := gOne a.fst
 
 
 notation:70 "e " x => gOne x
@@ -57,8 +57,8 @@ class GMul [SemilatticeSup D] where
 infixl:70 (priority := high) " ⊗ " => GMul.mul
 
 
-/-- `GMul` implies `Mul (ValuationAlgebra Φ)` -/
-instance GMul.toMul [SemilatticeSup D] [GMul Φ] : Mul (ValuationAlgebra Φ) where
+/-- `GMul` implies `Mul (ValuationAlgebra₇ Φ)` -/
+instance GMul.toMul [SemilatticeSup D] [GMul Φ] : Mul (ValuationAlgebra₇ Φ) where
   mul := fun ⟨_, φ⟩ ⟨_, ψ⟩ ↦ ⟨_, φ ⊗ ψ⟩
 
 
@@ -69,20 +69,20 @@ theorem mk_mul_mk [SemilatticeSup D] [GMul Φ] (φ : Φ x) (ψ : Φ y) :
 
 class GCommSemigroup [SemilatticeSup D] extends GMul Φ where
   /-- Multiplication is associative -/
-  mul_assoc (a b c : ValuationAlgebra Φ) : a * b * c = a * (b * c)
+  mul_assoc (a b c : ValuationAlgebra₇ Φ) : a * b * c = a * (b * c)
   /-- Multiplication is commutative -/
-  mul_comm (a b : ValuationAlgebra Φ) : a * b = b * a
+  mul_comm (a b : ValuationAlgebra₇ Φ) : a * b = b * a
 
-instance GCommSemigroup.toSemigroup [SemilatticeSup D] [GCommSemigroup Φ] : CommSemigroup (ValuationAlgebra Φ) where
+instance GCommSemigroup.toSemigroup [SemilatticeSup D] [GCommSemigroup Φ] : CommSemigroup (ValuationAlgebra₇ Φ) where
   mul_assoc := GCommSemigroup.mul_assoc
   mul_comm := GCommSemigroup.mul_comm
 
 
 class GLocalMonoid [SemilatticeSup D] extends GOne Φ, GMul Φ where
   /-- Multiplication by `one` is the identity -/
-  mul_one (a : ValuationAlgebra Φ) : a * (e (ð a)) = a
+  mul_one (a : ValuationAlgebra₇ Φ) : a * (e (ð a)) = a
   /-- Multiplication of `one`s produces a `one` -/
-  mul_one_one : (e x : ValuationAlgebra Φ) * (e y) = (e (x ⊔ y))
+  mul_one_one : (e x : ValuationAlgebra₇ Φ) * (e y) = (e (x ⊔ y))
 
 
 class GMargin [LE D] where
@@ -107,7 +107,7 @@ class GWeakMargin [DistribLattice D] [GCommSemigroup Φ] extends GMargin Φ wher
   margin_mul (φ : Φ x) (ψ : Φ y) : StrongMarginMulStatement φ ψ le_sup_left inf_le_right sup_inf_self
 
 
-def margin [LE D] [GMargin Φ] (φ : ValuationAlgebra Φ) (p : y ≤ ð φ) := mk (GMargin.margin φ.snd y p)
+def margin [LE D] [GMargin Φ] (φ : ValuationAlgebra₇ Φ) (p : y ≤ ð φ) := mk (GMargin.margin φ.snd y p)
 
 
 infixl:70 " ⇓ " => margin

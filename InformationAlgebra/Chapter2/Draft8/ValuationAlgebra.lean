@@ -9,18 +9,18 @@ variable
   [Preorder D]
 
 
-structure ValuationAlgebra (Φ : D → Type*) where mk' ::
+structure ValuationAlgebra₈ (Φ : D → Type*) where mk' ::
   grade : D
   val : Φ grade
   margin : D
   le : margin ≤ grade
 
 
-def ValuationAlgebra.mk {Φ : D → Type*} (φ : Φ x) : ValuationAlgebra Φ :=
+def ValuationAlgebra₈.mk {Φ : D → Type*} (φ : Φ x) : ValuationAlgebra₈ Φ :=
   { grade := x, val := φ, margin := x, le := le_refl x }
 
 
-def ValuationAlgebra.mkMargin {Φ : D → Type*} (φ : Φ x) (p : y ≤ x) : ValuationAlgebra Φ :=
+def ValuationAlgebra₈.mkMargin {Φ : D → Type*} (φ : Φ x) (p : y ≤ x) : ValuationAlgebra₈ Φ :=
   { grade := x, val := φ, margin := y, le := p }
 
 
@@ -35,7 +35,7 @@ class GOne where
   one x : Φ x
 
 
-def gOne {Φ : D → Type*} [GOne Φ] (x : D) : ValuationAlgebra Φ := ValuationAlgebra.mk (GOne.one x)
+def gOne {Φ : D → Type*} [GOne Φ] (x : D) : ValuationAlgebra₈ Φ := ValuationAlgebra₈.mk (GOne.one x)
 
 
 notation:70 "e " x => gOne x
@@ -61,8 +61,8 @@ z ≤ x
 -/
 
 
-/-- `GMul` implies `Mul (ValuationAlgebra Φ)` -/
-instance GMul.toMul [DistribLattice D] [GMul Φ] : Mul (ValuationAlgebra Φ) :=
+/-- `GMul` implies `Mul (ValuationAlgebra₈ Φ)` -/
+instance GMul.toMul [DistribLattice D] [GMul Φ] : Mul (ValuationAlgebra₈ Φ) :=
   ⟨fun ⟨x, φ, x', _⟩ ⟨y, ψ, y', _⟩ ↦ ⟨x ⊔ (y , GMul.mul φ ψ, _, _⟩⟩
 
 
@@ -74,15 +74,15 @@ theorem mk_mul_mk [DistribLattice D] [GMul Φ] (φ : Φ x) (ψ : Φ y) :
 
 class GCommSemigroup [DistribLattice D] extends GMul Φ where
   /-- Multiplication is associative. -/
-  mul_assoc (a b c : ValuationAlgebra Φ) : a * b * c = a * (b * c)
+  mul_assoc (a b c : ValuationAlgebra₈ Φ) : a * b * c = a * (b * c)
   /-- Multiplication is commutative. -/
-  mul_comm (a b : ValuationAlgebra Φ) : a * b = b * a
+  mul_comm (a b : ValuationAlgebra₈ Φ) : a * b = b * a
 
 
 class GLocalMonoid [DistribLattice D] extends GOne Φ, GMul Φ where
   /-- Multiplication by `one` is the identity -/
-  mul_one (a : ValuationAlgebra Φ) : a * (e (ð a)) = a
-  mul_one_one : (e x : ValuationAlgebra Φ) * (e y) = (e (x ⊔ y))
+  mul_one (a : ValuationAlgebra₈ Φ) : a * (e (ð a)) = a
+  mul_one_one : (e x : ValuationAlgebra₈ Φ) * (e y) = (e (x ⊔ y))
 
 
 class GWeakMargin [LE D] where
@@ -92,7 +92,7 @@ class GWeakMargin [LE D] where
 infixl:70 " ↓ " => GWeakMargin.margin
 
 
-def margin [LE D] [GWeakMargin Φ] (φ : ValuationAlgebra Φ) (p : y ≤ ð φ) := (GWeakMargin.margin φ p)
+def margin [LE D] [GWeakMargin Φ] (φ : ValuationAlgebra₈ Φ) (p : y ≤ ð φ) := (GWeakMargin.margin φ p)
 
 
 class GMarginWeakTrans [LE D] extends GWeakMargin Φ where
@@ -100,4 +100,4 @@ class GMarginWeakTrans [LE D] extends GWeakMargin Φ where
 
 
 class GMarginWeakMul [DistribLattice D] [GCommSemigroup Φ] where
-  margin_weak_mul (φ ψ : ValuationAlgebra Φ) (p : z ≤ (ð φ) ⊔ (ð ψ)) : (φ * ψ)
+  margin_weak_mul (φ ψ : ValuationAlgebra₈ Φ) (p : z ≤ (ð φ) ⊔ (ð ψ)) : (φ * ψ)
