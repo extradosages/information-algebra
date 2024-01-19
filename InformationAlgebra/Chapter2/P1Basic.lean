@@ -85,16 +85,27 @@ protected def OneMulOneStatement
   (e x : Φ x) ⊗ (e y) = (e x ⊔ y)
 
 
-/-!
+section HomotopicTo
+/-
+This is a small collection of types that I was using to provide defaults to generalized proof
+arguments in some janky dependent type theory places to help with debugging the construction
+of proofs.
 
+The principal structure is cheekily called `HomotopicTo` but it's not really the type of proofs
+homotopic to a basepoint; that was too restrictive for my debugging purposes. But the name was
+a helpful mnemonic.
 -/
+
 
 /-- The type of proofs homotopic to a basepoint (not quite; see definition).
 
 Coerces to the type of the basepoint. Has usefult `default`: the basepoint.-/
 structure HomotopicTo {Statement : Prop} (basepoint : Statement) where
   point : Statement
-  -- NOTE: Right now I'm just leaving this out, so this isn't *really* a type for homotopic proofs
+  /-
+  NOTE: Right now I'm just leaving this out, so this isn't *really* a type for proofs homotopic
+  to a basepoint.
+  -/
   -- homotopy : sorry
 
 
@@ -107,3 +118,6 @@ instance : Inhabited (HomotopicTo proof) where
 
 
 notation:70 "~" bp => HomotopicTo bp
+
+
+end HomotopicTo
