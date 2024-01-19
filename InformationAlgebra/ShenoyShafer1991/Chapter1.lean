@@ -17,6 +17,7 @@ namespace HyperGraph
 
 variable
   (X : Type*)
+  [DecidableEq X]
 
 
 /-- Elements of the underlying set of a hypergraph are called "vertices". -/
@@ -27,11 +28,13 @@ abbrev Vertex := X
 abbrev HyperEdge := Set X
 
 
-/-- A hypergraph consists of a (non-empty) family of subsets of a set. -/
-abbrev HyperGraph := Set (HyperEdge X)
+/-- A hypergraph consists of a finite (non-empty) family of subsets of a set. -/
+abbrev HyperGraph := { ℋ : Finset (HyperEdge X) // ℋ.Nonempty }
 
 
-protected def Intersecting {X} (b : HyperEdge X) (t : HyperEdge X) := b ∩ t ≠ ∅
+instance : Membership (HyperEdge X) (HyperGraph X) where
+  mem b ℋ := b ∈ ℋ.val
+
 
 
 /-- In a hypergraph, one edge dominates another if the intersection of the latter with
@@ -66,36 +69,88 @@ def Branch
     :
     Prop
     :=
-  HyperGraph.Intersecting b t ∧ HyperGraph.Dominates ℋ b t
+  b ∩ t ≠ ∅ ∧ HyperGraph.Dominates ℋ b t
 
 
 /-- In a hypergraph, the property of one edge being a twig relative to another is reciprocal to
 that of being a branch.
 
 See `Branch`.-/
+protected def Twig'
+    {X}
+    (ℋ : HyperGraph X)
+    (t : HyperEdge X)
+    :
+    Prop
+    :=
+  ∃ b ∈ ℋ, Branch ℋ b t
+
+
+/-- Utility proposition stipulating that a twig is disjoint from a hypergraph. -/
+protected def DisjointTwig'
+    {X}
+    (ℋ : HyperGraph X)
+    (t : HyperEdge X)
+    :
+    Prop
+    :=
+  t ∉ ℋ ∧ HyperGraph.Twig' ℋ t
+
+
+/-- The type of all twigs of a hypergraph. -/
 def Twig
     {X}
     (ℋ : HyperGraph X)
-    (t : HyperEdge X)
-    (b : HyperEdge X)
-    :
-    Prop
     :=
-  Branch ℋ b t
+  { t : HyperEdge X // HyperGraph.Twig' ℋ t }
 
 
-def Twig'
+/-- The type of all disjoint twigs of a hypergraph. -/
+def DisjointTwig
     {X}
     (ℋ : HyperGraph X)
-    (t : HyperEdge X)
-    :
-    Prop
     :=
-  ∃ b ∈ ℋ, Twig ℋ t b
+  { t : HyperEdge X // HyperGraph.DisjointTwig' ℋ t }
 
 
-/-- `HyperTree t ℋ p` means that `t` is a twig for the hypertree `ℋ` and is not already a hyperedge
-in `ℋ` (via `p`).-/
-inductive HyperTree : (t : HyperEdge X) → (ℋ : HyperGraph X) → Prop
-  | nil {root : HyperEdge X} : HyperTree root ∅
-  | cons : ∀ {a : HyperEdge X} {ℋ : HyperGraph X}, Twig' ℋ a → HyperTree a ℋ
+protected theorem hyper_tree_root X : ∀ _ : HyperEdge X, True := by
+  exact fun _ ↦ trivial
+  done
+
+
+protected def HyperTree' : (ℋ : HyperGraph X) → (Finset.Nonempty ℋ.val) → Prop :=
+  fun ⟨s, h⟩ _ ↦
+    if ∃ a : HyperEdge X, s = {a} then
+      True
+    else if ∃ (a : HyperEdge X) (hh : a ∉ s), s = (Finset.cons a s hh) then
+      HyperGraph.DisjointTwig' ⟨s, h⟩ a
+    else
+      False
+
+
+/-
+⊢ ∀ {α : Type u_4} {p : (s : Finset α) → Finset.Nonempty s → Prop},
+  (∀ (a : α), p {a} _) →
+    (∀ ⦃a : α⦄ (s : Finset α) (h : a ∉ s) (hs : Finset.Nonempty s), p s hs → p (Finset.cons a s h) _) →
+      ∀ {s : Finset α} (hs : Finset.Nonempty s), p s hs
+
+-/
+/- To prove a proposition about a nonempty `s : Finset α`, it suffices to show it holds for all
+singletons and that if it holds for nonempty `t : Finset α`, then it also holds for the `Finset`
+obtained by inserting an element in `t`. -/
+#check @Finset.Nonempty.cons_induction (HyperEdge X)
+
+
+def HyperTree (ℋ : HyperGraph X) : Prop :=
+  Finset.Nonempty.cons_induction (HyperGraph.hyper_tree_root X)
+
+
+#check Acc
+#check Finset.cons
+
+def HyperTree (ℋ : HyperGraph X) : Prop :=
+  if ℋ = 0 then
+    False
+  else if ∃ x, ℋ = {x} then
+    True
+  else
