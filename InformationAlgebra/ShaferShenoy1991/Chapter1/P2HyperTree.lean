@@ -165,24 +165,8 @@ theorem mem_singleton {a b : HyperEdge X} : a ∈ ({b} : HyperTree X) ↔ a = b 
       contradiction
 
 
-
-
-
-
-
-
-
-
-
-
---     exact ⟨Finset.mem_singleton_self _, fun _ => Finset.mem_singleton.1⟩
---   · ext
---     rw [Finset.mem_singleton]
---     exact ⟨t.right _, fun r => r.symm ▸ t.left⟩
-
-
--- theorem singleton_iff_unique_mem (s : Finset α) : (∃ a, s = {a}) ↔ ∃! a, a ∈ s := by
---   simp only [eq_singleton_iff_unique_mem, ExistsUnique]
+ theorem singleton_iff_unique_mem (𝒯 : HyperTree X) : (∃ a, 𝒯 = {a}) ↔ ∃! a, a ∈ 𝒯 := by
+  simp only [eq_singleton_iff_unique_mem, ExistsUnique]
 
 
 theorem two_elt_hypertree_lemma (𝒯 : HyperTree X) (p : 𝒯 = ([a₁]ₜ) ::ₜ a₂) : a₁ ∩ a₂ ≠ ∅ := by
