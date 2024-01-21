@@ -52,12 +52,17 @@ instance : Singleton (HyperEdge X) (HyperGraph X) := ⟨HyperGraph.singleton⟩
 
 
 /-- A hypergraph is a singleton if and only if it is so as a `Finset`. -/
+@[simp]
 theorem coe_singleton {ℋ : HyperGraph X} {a : HyperEdge X} : ℋ = {a} ↔ (ℋ : Finset _) = {a} := by
   constructor <;> intro h
   · exact congrArg (HyperGraph.val) h
   · ext : 1
     exact h
   done
+
+
+@[simp]
+theorem mem_singleton {ℋ : HyperGraph X} {a : HyperEdge X} : b ∈ ({a} : HyperGraph X) ↔ b = a := Finset.mem_singleton
 
 
 /-- In a hypergraph, one edge dominates another if the intersection of the latter with

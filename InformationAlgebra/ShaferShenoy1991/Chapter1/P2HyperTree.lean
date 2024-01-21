@@ -169,6 +169,16 @@ theorem mem_singleton {a b : HyperEdge X} : a ∈ ({b} : HyperTree X) ↔ a = b 
   simp only [eq_singleton_iff_unique_mem, ExistsUnique]
 
 
-theorem two_elt_hypertree_lemma (𝒯 : HyperTree X) (p : 𝒯 = [a₁]ₜ ::ₜ a₂) : a₁ ∩ a₂ ≠ ∅ := by
-  sorry
+-- For practice.
+/-- A small lemma formalizing a comment made by Shenoy and Shafer. -/
+theorem two_elt_hypertree_lemma (𝒯 : HyperTree X) (_ : 𝒯 = {b} ::ₜ t) : b ∩ t ≠ ∅ := by
+  have h₁ := t.property.right
+  whnf at h₁
+  simp only [coe_singleton] at h₁
+  have h₂ : Branch {b} b t := by
+    dsimp only [singleton, Membership.mem] at h₁
+    dsimp only [HyperGraph.singleton, HyperGraph.mem, HyperGraph.toFinset] at h₁
+    simp only [Finset.mem_singleton, exists_eq_left] at h₁
+    exact h₁
+  exact h₂.2.1
   done
