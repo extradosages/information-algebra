@@ -47,7 +47,7 @@ instance : Coe (HyperTree X) (HyperGraph X) where
 def HyperTree.nil := @HyperTree'.nil X
 
 
-notation:70 "[" a "]ₜ" => HyperTree.nil a
+notation:80 "[" a "]ₜ" => HyperTree.nil a
 
 
 /-- Attach a twig onto a hypertree to produce a new hypertree. -/
@@ -169,6 +169,6 @@ theorem mem_singleton {a b : HyperEdge X} : a ∈ ({b} : HyperTree X) ↔ a = b 
   simp only [eq_singleton_iff_unique_mem, ExistsUnique]
 
 
-theorem two_elt_hypertree_lemma (𝒯 : HyperTree X) (p : 𝒯 = ([a₁]ₜ) ::ₜ a₂) : a₁ ∩ a₂ ≠ ∅ := by
+theorem two_elt_hypertree_lemma (𝒯 : HyperTree X) (p : 𝒯 = [a₁]ₜ ::ₜ a₂) : a₁ ∩ a₂ ≠ ∅ := by
   sorry
   done
