@@ -14,6 +14,7 @@ namespace HyperGraph
 
 variable
   {X : Type}
+  [DecidableEq X]
 
 
 /-- Elements of the underlying set of a hypergraph are called "vertices". -/
@@ -21,7 +22,10 @@ abbrev Vertex (X : Type) := X
 
 
 /-- A hyperedge in a hypergraph is any set of vertices. -/
-abbrev HyperEdge (X : Type) := Set X
+abbrev HyperEdge (X : Type) := Finset X
+
+
+instance : Inter (HyperEdge X) := Finset.instInterFinset
 
 
 /-- A hypergraph consists of a finite (non-empty) family of subsets of a set. -/
@@ -51,6 +55,13 @@ protected def singleton (a : HyperEdge X) : HyperGraph X := ⟨{a}, Finset.singl
 instance : Singleton (HyperEdge X) (HyperGraph X) := ⟨HyperGraph.singleton⟩
 
 
+protected def insert (a : HyperEdge X) (ℋ : HyperGraph X) : HyperGraph X :=
+  ⟨Insert.insert a ℋ, Finset.insert_nonempty a ℋ⟩
+
+
+instance : Insert (HyperEdge X) (HyperGraph X) := ⟨HyperGraph.insert⟩
+
+
 /-- A hypergraph is a singleton if and only if it is so as a `Finset`. -/
 @[simp]
 theorem coe_singleton {ℋ : HyperGraph X} {a : HyperEdge X} : ℋ = {a} ↔ (ℋ : Finset _) = {a} := by
@@ -65,14 +76,34 @@ theorem coe_singleton {ℋ : HyperGraph X} {a : HyperEdge X} : ℋ = {a} ↔ (�
 theorem mem_singleton {ℋ : HyperGraph X} {a : HyperEdge X} : b ∈ ({a} : HyperGraph X) ↔ b = a := Finset.mem_singleton
 
 
-/-- In a hypergraph, one edge dominates another if the intersection of the latter with
+section Branches
+
+
+variable
+  {X : Type}
+  [DecidableEq X]
+
+
+/-- In a hypergraph, one edge supports another if the intersection of the latter with
 any other *distinct* edge in the hypergraph is contained within the intersection of the former with
 that edge.
 
-The emphasis on distinctness is important, because it allows a dominated edge to not be a subset
-of a dominating edge. -/
-protected def Dominates
-    {X}
+The emphasis on distinctness is important, because it allows a supported edge to not be a subset
+of a supporting edge.
+
+The concept of support in the thoery of local computation is important because valuations factored
+over a hypergraph can be reliably marginalized over supported hyperedges (with certain caveats;
+see `Twig`), specifically because the supporting edge will "absorb" all the computational content
+necessary for computing the factorization of an array marginalized over the supported edge.
+
+Speaking *very* informally, this is because such a factorization requires factoring out all values
+of a valuation on vertices "lost" from the graph-- if such vertices were contained by another
+hyper-edge, the inductive term in the factorization would have to adjust the valuation on that edge.
+There's flexibility in a factorization over a hypergraph by scaling factors which intersect up on
+one side of the intersection and inversely on the other side. By having a supporting edge, we can
+isolate all the scaling into the scaling edge without having to adjust the factor valuations on
+ANY other edge. -/
+protected def Supports
     (ℋ : HyperGraph X)
     (a : HyperEdge X)
     (b : HyperEdge X)
@@ -82,29 +113,31 @@ protected def Dominates
   ∀ c ∈ ℋ, c ≠ b → ∀ x ∈ b ∩ c, x ∈ a
 
 
-/-- Precautionary theorem which highlights that according to the definition, an edge dominates itself. -/
-theorem dominates_self (b : HyperEdge X) : HyperGraph.Dominates {b} b b := by
+/-- Precautionary theorem which highlights that according to the definition, an edge supports itself.
+
+This "degenerate case" complicates discussion down the line, which is why there are extra clauses in
+the definition of `Branch`.-/
+theorem supports_self (b : HyperEdge X) : HyperGraph.Supports {b} b b := by
   intros a _ _ c h_c_mem
-  exact Set.mem_of_mem_inter_left h_c_mem
+  simp_all only [ne_eq, Finset.mem_inter]
   done
 
 
 /-- In a hypergraph, one edge is a branch relative to another, distinct edge, if they intersect and
-if the former dominates the latter.
+if the former supports the latter.
 
-Requiring that a dominating pair of of edges intersect in this definition eliminates the degenerate
+Requiring that a supporting pair of of edges intersect in this definition eliminates the degenerate
 case of two disjoint edges in an otherwise empty hypergraph.
 
-See `HyperGraph.Dominates`.-/
+See `HyperGraph.Supports`.-/
 def Branch
-    {X}
     (ℋ : HyperGraph X)
     (b : HyperEdge X)
     (t : HyperEdge X)
     :
     Prop
     :=
-  b ≠ t ∧ b ∩ t ≠ ∅ ∧ HyperGraph.Dominates ℋ b t
+  b ≠ t ∧ b ∩ t ≠ ∅ ∧ HyperGraph.Supports ℋ b t
 
 
 /-- In a hypergraph, the property of one edge being a twig relative to another is reciprocal to
@@ -112,7 +145,6 @@ that of being a branch.
 
 See `Branch`.-/
 private def Twig'
-    {X}
     (ℋ : HyperGraph X)
     (t : HyperEdge X)
     :
@@ -123,7 +155,6 @@ private def Twig'
 
 /-- Utility proposition stipulating that a twig is disjoint from a hypergraph. -/
 private def DisjointTwig'
-    {X}
     (ℋ : HyperGraph X)
     (t : HyperEdge X)
     :
@@ -134,7 +165,6 @@ private def DisjointTwig'
 
 /-- The type of all twigs of a hypergraph. -/
 def Twig
-    {X}
     (ℋ : HyperGraph X)
     :=
   { t : HyperEdge X // Twig' ℋ t }
@@ -142,11 +172,10 @@ def Twig
 
 /-- The type of all disjoint twigs of a hypergraph. -/
 def DisjointTwig
-    {X}
     (ℋ : HyperGraph X)
     :=
   { t : HyperEdge X // DisjointTwig' ℋ t }
 
 
-instance {X} {ℋ : HyperGraph X} : CoeOut (DisjointTwig ℋ) (HyperEdge X) where
+instance {ℋ : HyperGraph X} : CoeOut (DisjointTwig ℋ) (HyperEdge X) where
   coe t := t.val
