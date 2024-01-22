@@ -15,12 +15,12 @@ namespace HyperTree
 
 variable
   {X : Type}
+  [DecidableEq X]
 
 
-private inductive HyperTree' (X : Type) where
+private inductive HyperTree' (X : Type) [DecidableEq X] where
   | nil (a : HyperEdge X) : HyperTree' X
   | cons (ℋ : HyperGraph X) (t : DisjointTwig ℋ) : HyperTree' X
-
 
 
 /-- A hypertree is an ordering of the edges in a hypergraph such that each edge is
@@ -50,8 +50,15 @@ def HyperTree.nil := @HyperTree'.nil X
 notation:80 "[" a "]ₜ" => HyperTree.nil a
 
 
+-- Not sure why the types needed so much help on this one
 /-- Attach a twig onto a hypertree to produce a new hypertree. -/
-def HyperTree.cons (t : @DisjointTwig X 𝒯) := HyperTree'.cons 𝒯 t
+def HyperTree.cons
+    {X : Type}
+    [inst : DecidableEq X]
+    (𝒯 : HyperTree X)
+    (t : @DisjointTwig X inst 𝒯)
+    :=
+    HyperTree'.cons 𝒯 t
 
 
 infixr:70 " ::ₜ " => HyperTree.cons
@@ -68,7 +75,7 @@ theorem coe_singleton (a : HyperEdge X) : HyperTree.toHyperGraph {a} = {a} := by
 
 
 /-- An inductive API for proposing membership of an edge in a hypertree. -/
-def inductiveMem {X} (a : HyperEdge X) (𝒯 : HyperTree X) : Prop :=
+def inductiveMem (a : HyperEdge X) (𝒯 : HyperTree X) : Prop :=
   match 𝒯 with
     | HyperTree'.nil b => a = b
     | HyperTree'.cons ℋ b => a = b ∨ a ∈ ℋ
@@ -80,7 +87,7 @@ instance : Membership (HyperEdge X) (HyperTree X) where
 
 /-- A "proxy" API for proposing membership of an edge in a hypertree, appealing to the tree's
 `Finset` API derived from -/
-def proxyMem {X} (a : HyperEdge X) (𝒯 : HyperTree X) : Prop := a ∈ (𝒯 : HyperGraph X)
+def proxyMem (a : HyperEdge X) (𝒯 : HyperTree X) : Prop := a ∈ (𝒯 : HyperGraph X)
 
 
 /-- The inductive and proxy membership APIs are equivalent. -/
