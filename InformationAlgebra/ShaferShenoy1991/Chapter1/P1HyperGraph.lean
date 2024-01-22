@@ -99,10 +99,10 @@ necessary for computing the factorization of an array marginalized over the supp
 Speaking *very* informally, this is because such a factorization requires factoring out all values
 of a valuation on vertices "lost" from the graph-- if such vertices were contained by another
 hyper-edge, the inductive term in the factorization would have to adjust the valuation on that edge.
-There's flexibility in a factorization over a hypergraph by scaling factors which intersect up on
-one side of the intersection and inversely on the other side. By having a supporting edge, we can
-isolate all the scaling into the scaling edge without having to adjust the factor valuations on
-ANY other edge. -/
+In the case that valuations are real-valued, there's flexibility in a factorization over a
+hypergraph by scaling factors which intersect up on one side of the intersection and inversely on
+the other side. By having a supporting edge, we canisolate all the scaling into the supporting edge
+without having to adjust the factor valuations on ANY other edge. Voila, computation localized. -/
 protected def Supports
     (ℋ : HyperGraph X)
     (a : HyperEdge X)
