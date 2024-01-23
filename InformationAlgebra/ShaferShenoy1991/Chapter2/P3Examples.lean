@@ -31,7 +31,7 @@ def hyperGraph : HyperGraph Element := {edge1, edge2, edge3, edge4, edge5}
 
 -- TODO: Extract into tactic
 theorem supports_edge4_edge1 : HyperGraph.Supports hyperGraph edge4 edge1 := by
-  intros edge h_edge_in_hyperGraph h_edge_ne_edge4 vertex h_vertex_in_inter
+  intros edge h_edge_in_hyperGraph _ _ h_vertex_in_inter
   dsimp only [Membership.mem] at h_edge_in_hyperGraph
   dsimp only [HyperGraph.mem, HyperGraph.toFinset] at h_edge_in_hyperGraph
   refine And.elim ?f (Finset.mem_inter.mp h_vertex_in_inter)
@@ -53,7 +53,7 @@ theorem branch_edge4_edge1 : Branch hyperGraph edge4 edge1 := by
   done
 
 theorem supports_edge4_edge5 : HyperGraph.Supports hyperGraph edge4 edge5 := by
-  intros edge h_edge_in_hyperGraph h_edge_ne_edge4 vertex h_vertex_in_inter
+  intros edge h_edge_in_hyperGraph _ _ h_vertex_in_inter
   dsimp only [Membership.mem] at h_edge_in_hyperGraph
   dsimp only [HyperGraph.mem, HyperGraph.toFinset] at h_edge_in_hyperGraph
   refine And.elim ?f (Finset.mem_inter.mp h_vertex_in_inter)
@@ -75,7 +75,7 @@ theorem branch_edge5_edge4 : Branch hyperGraph edge4 edge5 := by
   done
 
 theorem supports_edge3_edge5 : HyperGraph.Supports hyperGraph edge3 edge5 := by
-  intros edge h_edge_in_hyperGraph h_edge_ne_edge4 vertex h_vertex_in_inter
+  intros edge h_edge_in_hyperGraph _ _ h_vertex_in_inter
   dsimp only [Membership.mem] at h_edge_in_hyperGraph
   dsimp only [HyperGraph.mem, HyperGraph.toFinset] at h_edge_in_hyperGraph
   refine And.elim ?f (Finset.mem_inter.mp h_vertex_in_inter)
