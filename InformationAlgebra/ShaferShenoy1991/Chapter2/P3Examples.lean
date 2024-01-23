@@ -29,6 +29,7 @@ def edge5 : HyperEdge Element := {W, Y, Z}
 
 def hyperGraph : HyperGraph Element := {edge1, edge2, edge3, edge4, edge5}
 
+-- TODO: Extract into tactic
 theorem supports_edge4_edge1 : HyperGraph.Supports hyperGraph edge4 edge1 := by
   intros edge h_edge_in_hyperGraph h_edge_ne_edge4 vertex h_vertex_in_inter
   dsimp only [Membership.mem] at h_edge_in_hyperGraph
