@@ -1,4 +1,4 @@
-import InformationAlgebra.ShaferShenoy1991.Chapter1.P1HyperGraph
+import InformationAlgebra.ShaferShenoy1991.Chapter2.P1HyperGraph
 
 
 /-!
