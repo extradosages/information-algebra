@@ -95,3 +95,6 @@ theorem branch_edge3_edge4 : Branch hyperGraph edge3 edge5 := by
     · exact (bne_iff_ne (edge3 ∩ edge5) ∅).mp rfl
     · exact supports_edge3_edge5
   done
+
+/- TODO: Shafer and Shenoy make a point of highlighting that these are the only branches in this
+hypergraph, so maybe we should include some proofs that other pairs of edges are not branches. -/
