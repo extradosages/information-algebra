@@ -105,8 +105,7 @@ the other side. By having a supporting edge, we canisolate all the scaling into 
 without having to adjust the factor valuations on ANY other edge. Voila, computation localized. -/
 def HyperGraph.Supports
     (ℋ : HyperGraph X)
-    (a : HyperEdge X)
-    (b : HyperEdge X)
+    (a b : HyperEdge X)
     :
     Prop
     :=
@@ -132,8 +131,7 @@ case of two disjoint edges in an otherwise empty hypergraph.
 See `HyperGraph.Supports`.-/
 def HyperGraph.Branch
     (ℋ : HyperGraph X)
-    (b : HyperEdge X)
-    (t : HyperEdge X)
+    (b t : HyperEdge X)
     :
     Prop
     :=
