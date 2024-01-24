@@ -28,13 +28,13 @@ syntax "supports" : tactic
 macro_rules
   | `(tactic| supports) =>
     `(tactic|
-      intros edge h_edge_in_hyperGraph _ _ h_vertex_in_inter;
-      dsimp only [Membership.mem] at h_edge_in_hyperGraph;
-      dsimp only [HyperGraph.mem, HyperGraph.toFinset] at h_edge_in_hyperGraph;
+      intros edge h_edge_in_H _ _ h_vertex_in_inter;
+      dsimp only [Membership.mem] at h_edge_in_H;
+      dsimp only [HyperGraph.mem, HyperGraph.toFinset] at h_edge_in_H;
       refine And.elim ?f (Finset.mem_inter.mp h_vertex_in_inter);
       intros h_vertex_in₁ h_vertex_in₂;
-      fin_cases h_vertex_in₁ <;> fin_cases h_edge_in_hyperGraph;
-      all_goals repeat (first | contradiction | apply List.Mem.head | apply List.Mem.tail)
+      fin_cases h_vertex_in₁ <;> fin_cases h_edge_in_H;
+      all_goals repeat (first | contradiction | decide)
     )
 
 end Tactic
@@ -46,65 +46,59 @@ namespace Example1
 inductive Element
   | S | T | U | V | W | X | Y | Z
 
-instance : DecidableEq Element := by
-  decidable_eq_enum
-  done
+instance : DecidableEq Element := by decidable_eq_enum
 
 open Element
 
-def edge1 : HyperEdge Element := {S, T, V}
-def edge2 : HyperEdge Element := {U, X}
-def edge3 : HyperEdge Element := {U, V, W}
-def edge4 : HyperEdge Element := {T, V, W, X}
-def edge5 : HyperEdge Element := {W, Y, Z}
+def edge₁ : HyperEdge Element := {S, T, V}
+def edge₂ : HyperEdge Element := {U, X}
+def edge₃ : HyperEdge Element := {U, V, W}
+def edge₄ : HyperEdge Element := {T, V, W, X}
+def edge₅ : HyperEdge Element := {W, Y, Z}
 
-def ℋ : HyperGraph Element := {edge1, edge2, edge3, edge4, edge5}
+def ℋ : HyperGraph Element := {edge₁, edge₂, edge₃, edge₄, edge₅}
 
--- TODO: Extract into tactic
-theorem supports_edge4_edge1 : ℋ.Supports edge4 edge1 := by
-  supports
+
+theorem edge₄_ne_edge₁ : edge₄ ≠ edge₁ := by decide
+
+theorem edge₄_inter_edge₁ : (edge₄ ∩ edge₁).Nonempty := by
+  have h₁ : V ∈ edge₄ := by decide
+  have h₂ : V ∈ edge₁ := by decide
+  exact Exists.intro V <| Finset.mem_inter.mpr ⟨h₁, h₂⟩
   done
 
-theorem edge4_ne_edge1 : edge4 ≠ edge1 := by
-  exact (bne_iff_ne edge4 edge1).mp rfl
+theorem supports_edge₄_edge₁ : ℋ.Supports edge₄ edge₁ := by supports
+
+theorem branch_edge₄_edge₁ : ℋ.Branch edge₄ edge₁ :=
+  ⟨edge₄_ne_edge₁, edge₄_inter_edge₁, supports_edge₄_edge₁⟩
+
+
+theorem edge₄_ne_edge₅ : edge₄ ≠ edge₅ := by decide
+
+theorem edge₄_inter_edge₅ : (edge₄ ∩ edge₅).Nonempty := by
+  have h₁ : W ∈ edge₄ := by decide
+  have h₂ : W ∈ edge₅ := by decide
+  exact Exists.intro W <| Finset.mem_inter.mpr ⟨h₁, h₂⟩
   done
 
-theorem branch_edge4_edge1 : ℋ.Branch edge4 edge1 := by
-  constructor
-  · exact edge4_ne_edge1
-  · constructor
-    · exact (bne_iff_ne (edge4 ∩ edge1) ∅).mp rfl
-    · exact supports_edge4_edge1
+theorem supports_edge₄_edge₅ : ℋ.Supports edge₄ edge₅ := by supports
+
+theorem branch_edge₄_edge₅ : ℋ.Branch edge₄ edge₅ :=
+  ⟨edge₄_ne_edge₅, edge₄_inter_edge₅, supports_edge₄_edge₅⟩
+
+
+theorem edge₃_ne_edge₅ : edge₃ ≠ edge₅ := by decide
+
+theorem edge₃_inter_edge₅ : (edge₃ ∩ edge₅).Nonempty := by
+  have h₁ : W ∈ edge₃ := by decide
+  have h₂ : W ∈ edge₅ := by decide
+  exact Exists.intro W <| Finset.mem_inter.mpr ⟨h₁, h₂⟩
   done
 
-#print branch_edge4_edge1
+theorem supports_edge₃_edge₅ : ℋ.Supports edge₃ edge₅ := by supports
 
-theorem supports_edge4_edge5 : ℋ.Supports edge4 edge5 := by
-  supports
-  done
-
-theorem edge4_ne_edge5 : edge4 ≠ edge5 := by
-  exact (bne_iff_ne edge4 edge5).mp rfl
-  done
-
-theorem branch_edge5_edge4 : ℋ.Branch edge4 edge5 := by
-  done
-
-theorem supports_edge3_edge5 : ℋ.Supports edge3 edge5 := by
-  supports
-  done
-
-theorem edge3_ne_edge5 : edge3 ≠ edge5 := by
-  exact (bne_iff_ne edge3 edge5).mp rfl
-  done
-
-theorem branch_edge3_edge4 : ℋ.Branch edge3 edge5 := by
-  constructor
-  · exact edge3_ne_edge5
-  · constructor
-    · exact (bne_iff_ne (edge3 ∩ edge5) ∅).mp rfl
-    · exact supports_edge3_edge5
-  done
+theorem branch_edge3_edge4 : ℋ.Branch edge₃ edge₅ :=
+  ⟨edge₃_ne_edge₅, edge₃_inter_edge₅, supports_edge₃_edge₅⟩
 
 /- TODO: Shafer and Shenoy make a point of highlighting that these are the only branches in this
 hypergraph, so maybe we should include some proofs that other pairs of edges are not branches. -/
@@ -119,9 +113,7 @@ inductive Element where
 
 open Element
 
-instance : DecidableEq Element := by
-  decidable_eq_enum
-  done
+instance : DecidableEq Element := by decidable_eq_enum
 
 def edge₁ : HyperEdge Element := {W, X}
 def edge₂ : HyperEdge Element := {X, Y}
@@ -134,22 +126,8 @@ def ℋ₁ : HyperGraph Element := {edge₁, edge₂, edge₃}
 def ℋ₂ : HyperGraph Element := {edge₁, edge₂, edge₄}
 def ℋ₃ : HyperGraph Element := {edge₁, edge₅, edge₆}
 
-theorem H1_edge₁_supports_edge₂ : ℋ₁.Supports edge₁ edge₂ := by
-  supports
-  done
+theorem H1_edge₁_supports_edge₂ : ℋ₁.Supports edge₁ edge₂ := by supports
 
-theorem edge₁_ne_edge₂ : edge₁ ≠ edge₂ := by
-  intro h_eq
-  have h_W_in_edge₁ : W ∈ edge₁ := by
-    apply Finset.insert_eq_self.mp rfl
-    done
-  have _h_W_nin_edge₂ : W ∉ edge₂ := by
-    apply Finset.erase_eq_self.mp rfl
-    done
-  have h_forall := Finset.ext_iff.mp h_eq
-  have h_W_in_iff := h_forall W
-  have _h_W_in_edge₂ := h_W_in_iff.mp h_W_in_edge₁
-  contradiction
-  done
+theorem edge₁_ne_edge₂ : edge₁ ≠ edge₂ := by decide
 
 end Example2
