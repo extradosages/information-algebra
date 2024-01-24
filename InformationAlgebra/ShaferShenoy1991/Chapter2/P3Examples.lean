@@ -8,17 +8,46 @@ open HyperTree
 
 namespace Example
 
+namespace Tactic
+
+syntax "decidable_eq_enum" : tactic
+
+macro_rules
+  | `(tactic| decidable_eq_enum) =>
+    `(tactic|
+      intros a b;
+      cases a <;>
+      cases b <;>
+      (try apply Decidable.isTrue rfl) <;>
+      (try apply Decidable.isFalse; simp_all only [not_false_eq_true])
+    )
+
+
+syntax "supports" : tactic
+
+macro_rules
+  | `(tactic| supports) =>
+    `(tactic|
+      intros edge h_edge_in_hyperGraph _ _ h_vertex_in_inter;
+      dsimp only [Membership.mem] at h_edge_in_hyperGraph;
+      dsimp only [HyperGraph.mem, HyperGraph.toFinset] at h_edge_in_hyperGraph;
+      refine And.elim ?f (Finset.mem_inter.mp h_vertex_in_inter);
+      intros h_vertex_in₁ h_vertex_in₂;
+      fin_cases h_vertex_in₁ <;> fin_cases h_edge_in_hyperGraph;
+      all_goals repeat (first | contradiction | apply List.Mem.head | apply List.Mem.tail)
+    )
+
+end Tactic
+
+open Tactic
+
 namespace Example1
 
 inductive Element
   | S | T | U | V | W | X | Y | Z
 
 instance : DecidableEq Element := by
-  intros a b
-  cases a <;>
-    cases b <;>
-      (try apply Decidable.isTrue rfl) <;>
-        (try apply Decidable.isFalse; simp_all only [not_false_eq_true])
+  decidable_eq_enum
   done
 
 open Element
@@ -33,13 +62,7 @@ def ℋ : HyperGraph Element := {edge1, edge2, edge3, edge4, edge5}
 
 -- TODO: Extract into tactic
 theorem supports_edge4_edge1 : ℋ.Supports edge4 edge1 := by
-  intros edge h_edge_in_hyperGraph _ _ h_vertex_in_inter
-  dsimp only [Membership.mem] at h_edge_in_hyperGraph
-  dsimp only [HyperGraph.mem, HyperGraph.toFinset] at h_edge_in_hyperGraph
-  refine And.elim ?f (Finset.mem_inter.mp h_vertex_in_inter)
-  intros h_vertex_in₁ h_vertex_in₂
-  fin_cases h_vertex_in₁ <;> fin_cases h_edge_in_hyperGraph
-  all_goals repeat (first | contradiction | apply List.Mem.head | apply List.Mem.tail)
+  supports
   done
 
 theorem edge4_ne_edge1 : edge4 ≠ edge1 := by
@@ -54,14 +77,10 @@ theorem branch_edge4_edge1 : ℋ.Branch edge4 edge1 := by
     · exact supports_edge4_edge1
   done
 
+#print branch_edge4_edge1
+
 theorem supports_edge4_edge5 : ℋ.Supports edge4 edge5 := by
-  intros edge h_edge_in_hyperGraph _ _ h_vertex_in_inter
-  dsimp only [Membership.mem] at h_edge_in_hyperGraph
-  dsimp only [HyperGraph.mem, HyperGraph.toFinset] at h_edge_in_hyperGraph
-  refine And.elim ?f (Finset.mem_inter.mp h_vertex_in_inter)
-  intros h_vertex_in₁ h_vertex_in₂
-  fin_cases h_vertex_in₁ <;> fin_cases h_edge_in_hyperGraph
-  all_goals repeat (first | contradiction | apply List.Mem.head | apply List.Mem.tail)
+  supports
   done
 
 theorem edge4_ne_edge5 : edge4 ≠ edge5 := by
@@ -69,21 +88,10 @@ theorem edge4_ne_edge5 : edge4 ≠ edge5 := by
   done
 
 theorem branch_edge5_edge4 : ℋ.Branch edge4 edge5 := by
-  constructor
-  · exact edge4_ne_edge5
-  · constructor
-    · exact (bne_iff_ne (edge4 ∩ edge5) ∅).mp rfl
-    · exact supports_edge4_edge5
   done
 
 theorem supports_edge3_edge5 : ℋ.Supports edge3 edge5 := by
-  intros edge h_edge_in_hyperGraph _ _ h_vertex_in_inter
-  dsimp only [Membership.mem] at h_edge_in_hyperGraph
-  dsimp only [HyperGraph.mem, HyperGraph.toFinset] at h_edge_in_hyperGraph
-  refine And.elim ?f (Finset.mem_inter.mp h_vertex_in_inter)
-  intros h_vertex_in₁ h_vertex_in₂
-  fin_cases h_vertex_in₁ <;> fin_cases h_edge_in_hyperGraph
-  all_goals repeat (first | contradiction | apply List.Mem.head | apply List.Mem.tail)
+  supports
   done
 
 theorem edge3_ne_edge5 : edge3 ≠ edge5 := by
@@ -112,11 +120,7 @@ inductive Element where
 open Element
 
 instance : DecidableEq Element := by
-  intros a b
-  cases a <;>
-    cases b <;>
-      (try apply Decidable.isTrue rfl) <;>
-        (try apply Decidable.isFalse; simp_all only [not_false_eq_true])
+  decidable_eq_enum
   done
 
 def edge₁ : HyperEdge Element := {W, X}
@@ -131,7 +135,21 @@ def ℋ₂ : HyperGraph Element := {edge₁, edge₂, edge₄}
 def ℋ₃ : HyperGraph Element := {edge₁, edge₅, edge₆}
 
 theorem H1_edge₁_supports_edge₂ : ℋ₁.Supports edge₁ edge₂ := by
-  sorry
+  supports
+  done
+
+theorem edge₁_ne_edge₂ : edge₁ ≠ edge₂ := by
+  intro h_eq
+  have h_W_in_edge₁ : W ∈ edge₁ := by
+    apply Finset.insert_eq_self.mp rfl
+    done
+  have _h_W_nin_edge₂ : W ∉ edge₂ := by
+    apply Finset.erase_eq_self.mp rfl
+    done
+  have h_forall := Finset.ext_iff.mp h_eq
+  have h_W_in_iff := h_forall W
+  have _h_W_in_edge₂ := h_W_in_iff.mp h_W_in_edge₁
+  contradiction
   done
 
 end Example2
