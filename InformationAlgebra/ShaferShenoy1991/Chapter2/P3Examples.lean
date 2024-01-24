@@ -37,10 +37,16 @@ macro_rules
     )
 
 
-syntax (name := inter) "inter" ident : tactic
+syntax "inter" ident : tactic
 macro_rules
   | `(tactic| inter $elt:ident) =>
     `(tactic| exact Exists.intro $elt <| Finset.mem_inter.mpr ⟨by decide, by decide⟩)
+
+
+syntax "branch" ident : tactic
+macro_rules
+  | `(tactic| branch $elt:ident) =>
+    `(tactic| exact ⟨by decide, by inter $elt, by supports⟩)
 
 
 end Tactic
@@ -52,9 +58,9 @@ namespace Example1
 inductive Element
   | S | T | U | V | W | X | Y | Z
 
-instance : DecidableEq Element := by decidable_eq_enum
-
 open Element
+
+instance : DecidableEq Element := by decidable_eq_enum
 
 def edge₁ : HyperEdge Element := {S, T, V}
 def edge₂ : HyperEdge Element := {U, X}
@@ -64,35 +70,11 @@ def edge₅ : HyperEdge Element := {W, Y, Z}
 
 def ℋ : HyperGraph Element := {edge₁, edge₂, edge₃, edge₄, edge₅}
 
+theorem branch_edge₄_edge₁ : ℋ.Branch edge₄ edge₁ := by branch V
 
-theorem edge₄_ne_edge₁ : edge₄ ≠ edge₁ := by decide
+theorem branch_edge₄_edge₅ : ℋ.Branch edge₄ edge₅ := by branch W
 
-theorem edge₄_inter_edge₁ : (edge₄ ∩ edge₁).Nonempty := by inter V
-
-theorem supports_edge₄_edge₁ : ℋ.Supports edge₄ edge₁ := by supports
-
-theorem branch_edge₄_edge₁ : ℋ.Branch edge₄ edge₁ :=
-  ⟨edge₄_ne_edge₁, edge₄_inter_edge₁, supports_edge₄_edge₁⟩
-
-
-theorem edge₄_ne_edge₅ : edge₄ ≠ edge₅ := by decide
-
-theorem edge₄_inter_edge₅ : (edge₄ ∩ edge₅).Nonempty := by inter W
-
-theorem supports_edge₄_edge₅ : ℋ.Supports edge₄ edge₅ := by supports
-
-theorem branch_edge₄_edge₅ : ℋ.Branch edge₄ edge₅ :=
-  ⟨edge₄_ne_edge₅, edge₄_inter_edge₅, supports_edge₄_edge₅⟩
-
-
-theorem edge₃_ne_edge₅ : edge₃ ≠ edge₅ := by decide
-
-theorem edge₃_inter_edge₅ : (edge₃ ∩ edge₅).Nonempty := by inter W
-
-theorem supports_edge₃_edge₅ : ℋ.Supports edge₃ edge₅ := by supports
-
-theorem branch_edge3_edge4 : ℋ.Branch edge₃ edge₅ :=
-  ⟨edge₃_ne_edge₅, edge₃_inter_edge₅, supports_edge₃_edge₅⟩
+theorem branch_edge3_edge4 : ℋ.Branch edge₃ edge₅ := by branch W
 
 /- TODO: Shafer and Shenoy make a point of highlighting that these are the only branches in this
 hypergraph, so maybe we should include some proofs that other pairs of edges are not branches. -/
@@ -120,13 +102,11 @@ def ℋ₁ : HyperGraph Element := {edge₁, edge₂, edge₃}
 def ℋ₂ : HyperGraph Element := {edge₁, edge₂, edge₄}
 def ℋ₃ : HyperGraph Element := {edge₁, edge₅, edge₆}
 
-theorem H1_edge₁_supports_edge₂ : ℋ₁.Supports edge₁ edge₂ := by supports
-
-theorem edge₁_ne_edge₂ : edge₁ ≠ edge₂ := by decide
-
-theorem edge₁_inter_edge₂ : (edge₁ ∩ edge₂).Nonempty := by inter X
-
-
-
+theorem H1_branch_edge₁_edge₂ : ℋ₁.Branch edge₁ edge₂ := by branch X
+theorem H1_branch_edge₁_edge₃ : ℋ₁.Branch edge₁ edge₃ := by branch X
+theorem H1_branch_edge₂_edge₃ : ℋ₁.Branch edge₂ edge₃ := by branch X
+theorem H1_branch_edge₂_edge₁ : ℋ₁.Branch edge₂ edge₁ := by branch X
+theorem H1_branch_edge₃_edge₁ : ℋ₁.Branch edge₃ edge₁ := by branch X
+theorem H1_branch_edge₃_edge₂ : ℋ₁.Branch edge₃ edge₂ := by branch X
 
 end Example2
