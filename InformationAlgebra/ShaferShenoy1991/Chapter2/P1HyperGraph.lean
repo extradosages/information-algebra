@@ -135,7 +135,7 @@ def HyperGraph.Branch
     :
     Prop
     :=
-  b ≠ t ∧ b ∩ t ≠ ∅ ∧ ℋ.Supports b t
+  b ≠ t ∧ (b ∩ t).Nonempty ∧ ℋ.Supports b t
 
 
 /-- In a hypergraph, the property of one edge being a twig relative to another is reciprocal to

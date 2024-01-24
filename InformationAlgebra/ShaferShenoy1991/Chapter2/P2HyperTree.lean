@@ -178,7 +178,7 @@ theorem mem_singleton {a b : HyperEdge X} : a ∈ ({b} : HyperTreeCons X) ↔ a 
 
 -- For practice.
 /-- A small lemma formalizing a comment made by Shenoy and Shafer. -/
-theorem two_elt_hypertree_lemma (𝒯 : HyperTreeCons X) (_ : 𝒯 = {b} ::ₜ t) : b ∩ t ≠ ∅ := by
+theorem two_elt_hypertree_lemma (𝒯 : HyperTreeCons X) (_ : 𝒯 = {b} ::ₜ t) : (b ∩ t).Nonempty := by
   have h₁ := t.property.right
   whnf at h₁
   simp only [coe_singleton] at h₁
