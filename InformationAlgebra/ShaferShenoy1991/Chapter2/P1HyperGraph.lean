@@ -103,7 +103,7 @@ In the case that valuations are real-valued, there's flexibility in a factorizat
 hypergraph by scaling factors which intersect up on one side of the intersection and inversely on
 the other side. By having a supporting edge, we canisolate all the scaling into the supporting edge
 without having to adjust the factor valuations on ANY other edge. Voila, computation localized. -/
-protected def Supports
+def HyperGraph.Supports
     (ℋ : HyperGraph X)
     (a : HyperEdge X)
     (b : HyperEdge X)
@@ -130,14 +130,14 @@ Requiring that a supporting pair of of edges intersect in this definition elimin
 case of two disjoint edges in an otherwise empty hypergraph.
 
 See `HyperGraph.Supports`.-/
-def Branch
+def HyperGraph.Branch
     (ℋ : HyperGraph X)
     (b : HyperEdge X)
     (t : HyperEdge X)
     :
     Prop
     :=
-  b ≠ t ∧ b ∩ t ≠ ∅ ∧ HyperGraph.Supports ℋ b t
+  b ≠ t ∧ b ∩ t ≠ ∅ ∧ ℋ.Supports b t
 
 
 /-- In a hypergraph, the property of one edge being a twig relative to another is reciprocal to
@@ -150,7 +150,7 @@ private def Twig'
     :
     Prop
     :=
-  ∃ b ∈ ℋ, Branch ℋ b t
+  ∃ b ∈ ℋ, ℋ.Branch b t
 
 
 /-- Utility proposition stipulating that a twig is disjoint from a hypergraph. -/
@@ -164,18 +164,18 @@ private def DisjointTwig'
 
 
 /-- The type of all twigs of a hypergraph. -/
-def Twig
+def HyperGraph.Twig
     (ℋ : HyperGraph X)
     :=
   { t : HyperEdge X // Twig' ℋ t }
 
 
 /-- The type of all disjoint twigs of a hypergraph. -/
-def DisjointTwig
+def HyperGraph.DisjointTwig
     (ℋ : HyperGraph X)
     :=
   { t : HyperEdge X // DisjointTwig' ℋ t }
 
 
-instance {ℋ : HyperGraph X} : CoeOut (DisjointTwig ℋ) (HyperEdge X) where
+instance {ℋ : HyperGraph X} : CoeOut (ℋ.DisjointTwig) (HyperEdge X) where
   coe t := t.val
