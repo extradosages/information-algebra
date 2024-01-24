@@ -10,8 +10,8 @@ namespace Example
 
 namespace Tactic
 
-syntax "decidable_eq_enum" : tactic
 
+syntax "decidable_eq_enum" : tactic
 macro_rules
   | `(tactic| decidable_eq_enum) =>
     `(tactic|
@@ -24,7 +24,6 @@ macro_rules
 
 
 syntax "supports" : tactic
-
 macro_rules
   | `(tactic| supports) =>
     `(tactic|
@@ -36,6 +35,13 @@ macro_rules
       fin_cases h_vertex_in₁ <;> fin_cases h_edge_in_H;
       all_goals repeat (first | contradiction | decide)
     )
+
+
+syntax (name := inter) "inter" ident : tactic
+macro_rules
+  | `(tactic| inter $elt:ident) =>
+    `(tactic| exact Exists.intro $elt <| Finset.mem_inter.mpr ⟨by decide, by decide⟩)
+
 
 end Tactic
 
@@ -61,11 +67,7 @@ def ℋ : HyperGraph Element := {edge₁, edge₂, edge₃, edge₄, edge₅}
 
 theorem edge₄_ne_edge₁ : edge₄ ≠ edge₁ := by decide
 
-theorem edge₄_inter_edge₁ : (edge₄ ∩ edge₁).Nonempty := by
-  have h₁ : V ∈ edge₄ := by decide
-  have h₂ : V ∈ edge₁ := by decide
-  exact Exists.intro V <| Finset.mem_inter.mpr ⟨h₁, h₂⟩
-  done
+theorem edge₄_inter_edge₁ : (edge₄ ∩ edge₁).Nonempty := by inter V
 
 theorem supports_edge₄_edge₁ : ℋ.Supports edge₄ edge₁ := by supports
 
@@ -75,11 +77,7 @@ theorem branch_edge₄_edge₁ : ℋ.Branch edge₄ edge₁ :=
 
 theorem edge₄_ne_edge₅ : edge₄ ≠ edge₅ := by decide
 
-theorem edge₄_inter_edge₅ : (edge₄ ∩ edge₅).Nonempty := by
-  have h₁ : W ∈ edge₄ := by decide
-  have h₂ : W ∈ edge₅ := by decide
-  exact Exists.intro W <| Finset.mem_inter.mpr ⟨h₁, h₂⟩
-  done
+theorem edge₄_inter_edge₅ : (edge₄ ∩ edge₅).Nonempty := by inter W
 
 theorem supports_edge₄_edge₅ : ℋ.Supports edge₄ edge₅ := by supports
 
@@ -89,11 +87,7 @@ theorem branch_edge₄_edge₅ : ℋ.Branch edge₄ edge₅ :=
 
 theorem edge₃_ne_edge₅ : edge₃ ≠ edge₅ := by decide
 
-theorem edge₃_inter_edge₅ : (edge₃ ∩ edge₅).Nonempty := by
-  have h₁ : W ∈ edge₃ := by decide
-  have h₂ : W ∈ edge₅ := by decide
-  exact Exists.intro W <| Finset.mem_inter.mpr ⟨h₁, h₂⟩
-  done
+theorem edge₃_inter_edge₅ : (edge₃ ∩ edge₅).Nonempty := by inter W
 
 theorem supports_edge₃_edge₅ : ℋ.Supports edge₃ edge₅ := by supports
 
@@ -129,5 +123,10 @@ def ℋ₃ : HyperGraph Element := {edge₁, edge₅, edge₆}
 theorem H1_edge₁_supports_edge₂ : ℋ₁.Supports edge₁ edge₂ := by supports
 
 theorem edge₁_ne_edge₂ : edge₁ ≠ edge₂ := by decide
+
+theorem edge₁_inter_edge₂ : (edge₁ ∩ edge₂).Nonempty := by inter X
+
+
+
 
 end Example2
