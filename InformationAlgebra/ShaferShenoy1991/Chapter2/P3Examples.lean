@@ -19,7 +19,7 @@ macro_rules
       cases a <;>
       cases b <;>
       (try apply Decidable.isTrue rfl) <;>
-      (try apply Decidable.isFalse; simp_all only [not_false_eq_true])
+      (try apply Decidable.isFalse; apply Not.intro; intro h; injection h)
     )
 
 
