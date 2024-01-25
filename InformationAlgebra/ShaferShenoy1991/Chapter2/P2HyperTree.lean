@@ -5,6 +5,25 @@ import InformationAlgebra.ShaferShenoy1991.Chapter2.P1HyperGraph
 # HyperTree
 
 This file introduces hypertrees.
+
+
+## Implementation History
+
+The `HyperTree` type was originally implemented as an inductive type, in which terms were
+constructed sequentially by adding disjoint twigs. This was extremely cumbersome, because of
+how thick the disjoint twig type is.
+
+The API that I really wanted (for small explicit constructions) was to be able to just list
+out the edges in the construction sequence and then have a space where subgoals were created
+for the list asking me to verify each of the individual branchings that pin together a such a
+hypertree. This was totally infeasible in the literal, low-level inductive model.
+
+The objective in that case suggests an obvious solution: model hypertrees as lists of edges.
+Fortunately, the `List` namespace is very, very rich. Making the switch made a whole lot of
+proofs much, much easier. The only thing which was just a bit tricky was coming up with the
+inductive proposition that each edge added to a tree is a twig for its section, but the difficulty
+was entirely a consequence of unfamiliarity with inductive propositions at the time, and was
+easily overcome.
 -/
 
 open HyperGraph
@@ -139,10 +158,10 @@ def HyperTree.cons (𝒯 : HyperTree X) (a : @HyperGraph.DisjointTwig X inst �
 
 
 @[inherit_doc]
-infixl:70 " ::ₛ "  => HyperTree.cons
+infixl:70 " ::ₜ "  => HyperTree.cons
 
 
-theorem mem_cons {𝒯 : HyperTree X} {a : @HyperGraph.DisjointTwig X inst 𝒯} {b : HyperEdge X} : b ∈ (𝒯::ₛa) ↔ b ∈ 𝒯 ∨ b = a := by
+theorem mem_cons {𝒯 : HyperTree X} {a : @HyperGraph.DisjointTwig X inst 𝒯} {b : HyperEdge X} : b ∈ (𝒯 ::ₜ a) ↔ b ∈ 𝒯 ∨ b = a := by
   constructor <;> intro h
   · cases h with
       | head _ => exact Or.inr rfl
