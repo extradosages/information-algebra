@@ -15,182 +15,145 @@ namespace HyperTree
 
 variable
   {X : Type}
-  [DecidableEq X]
+  [inst : DecidableEq X]
 
 
-private inductive HyperTreeCons' (X : Type) [DecidableEq X] where
-  | nil (a : HyperEdge X) : HyperTreeCons' X
-  | cons (ℋ : HyperGraph X) (t : ℋ.DisjointTwig) : HyperTreeCons' X
+/-- The type of all proofs that a list of hyperedges can be decomposed into the sequential
+addition of twigs.
+
+Note that this type does not require that a twig involved in the construction sequence is disjoint
+at each step. Although this is essential in the definition of a `HyperTree`, it has been excluded
+from this type for accessibility reasons. That constraint is instead folded into the `HyperTree`
+type itself, as a separate `List.Nodup` proof. -/
+inductive ConsTwig : (HyperEdge X) → (List (HyperEdge X)) → Prop where
+  /-- Any trivial hypergraph is a vacuously a hypertree.
+
+  Note that a trivial hypergraph has one edge. -/
+  | nil  : ∀ {a : HyperEdge X}, ConsTwig a []
+  /-- By providing a proof that an edge `a` is a twig for the hypergraph comprised of the elements
+  of a nonempty list `b::l` and a proof that `b::l` is itself constructed of twigs, we obtain a
+  proof that the `a::b::l` is itself constructed by twigs. -/
+  | cons : ∀ {a b : HyperEdge X} {l : List (HyperEdge X)}, (HyperGraph.Twig' (List.toHyperGraph b l) a) → (ConsTwig b l) → ConsTwig a (b::l)
+
+attribute [simp] ConsTwig.nil
+attribute [simp] ConsTwig.cons
 
 
-/-- A hypertree construction is an ordering of the edges in a hypergraph such that each edge is
-a twig for the graph comprised of the section of edges preceding it in the ordering. -/
-abbrev HyperTreeCons := HyperTreeCons'
+/-- A `HyperTree` is a `HyperGraph`, together with an ordering of its edges such that each edge is
+a twig for the hypergraph given by its downward section in the ordering.
+-/
+structure HyperTree (X : Type) [inst : DecidableEq X] where
+  /-- The most recent edge added to the hypertree.
+
+  Note that this is not the root. -/
+  head : HyperEdge X
+  /-- Other edges in the hypertree. -/
+  tail : List (HyperEdge X)
+  /-- No edges in a hypertree are repeated. -/
+  nodup : (head::tail).Nodup
+  /-- The hypertree is constructed by twigs. -/
+  constwig : @ConsTwig X inst head tail
 
 
-variable
-  (𝒯 : HyperTreeCons X)
+def HyperTree.toList (𝒯 : HyperTree X) : List (HyperEdge X) := 𝒯.head::𝒯.tail
 
 
-/-- Obtain a hypergraph from a hypertree construction. -/
-def HyperTreeCons.toHyperGraph : HyperGraph X :=
-  match 𝒯 with
-    | HyperTreeCons'.nil a => ⟨{a}, Finset.singleton_nonempty a⟩
-    | HyperTreeCons'.cons ℋ a => ⟨Finset.cons a.1 ℋ a.2.left, Finset.nonempty_cons a.2.left⟩
+theorem toList_nonempty {𝒯 : HyperTree X} : 𝒯.toList ≠ [] := List.getLast?_isSome.mp rfl
 
 
-instance : Coe (HyperTreeCons X) (HyperGraph X) where
-  coe 𝒯 := 𝒯.toHyperGraph
+def HyperTree.toHyperGraph (𝒯 : HyperTree X) : HyperGraph X :=
+  ⟨𝒯.toList.toFinset, List.toFinset_nonempty_iff (HyperTree.toList 𝒯) |>.mpr toList_nonempty⟩
 
 
-/-- A trivial hypertree construction. -/
-def HyperTreeCons.nil := @HyperTreeCons'.nil X
+instance : Coe (HyperTree X) (HyperGraph X) := ⟨HyperTree.toHyperGraph⟩
 
 
-notation:80 "[" a "]ₜ" => HyperTreeCons.nil a
+instance : Singleton (HyperEdge X) (HyperTree X) where
+  singleton a := ⟨a, [], List.nodup_singleton a, ConsTwig.nil⟩
 
 
--- Not sure why the types needed so much help on this one
-/-- Attach a twig onto a hypertree to produce a new hypertree. -/
-def HyperTreeCons.cons
-    {X : Type}
-    [inst : DecidableEq X]
-    (𝒯 : HyperTreeCons X)
-    (t : @HyperGraph.DisjointTwig X inst 𝒯)
-    :=
-    HyperTreeCons'.cons 𝒯 t
+theorem coe_singleton {a : HyperEdge X} :  ({a} : HyperTree X) = ({a} : HyperGraph X) := rfl
 
 
-infixr:70 " ::ₜ " => HyperTreeCons.cons
-
-
-instance : Singleton (HyperEdge X) (HyperTreeCons X) where
-  singleton a := [a]ₜ
-
-
-/-- A singleton hypertree re-interpreted as a hypergraph is equal to the singleton hypergraph. -/
-theorem coe_singleton (a : HyperEdge X) : HyperTreeCons.toHyperGraph {a} = {a} := by
-  constructor
-  done
-
-
-/-- An inductive API for proposing membership of an edge in a hypertree. -/
-def inductiveMem (a : HyperEdge X) (𝒯 : HyperTreeCons X) : Prop :=
-  match 𝒯 with
-    | HyperTreeCons'.nil b => a = b
-    | HyperTreeCons'.cons ℋ b => a = b ∨ a ∈ ℋ
-
-
-instance : Membership (HyperEdge X) (HyperTreeCons X) where
-  mem a 𝒯 := inductiveMem a 𝒯
-
-
-/-- A "proxy" API for proposing membership of an edge in a hypertree, appealing to the tree's
-`Finset` API derived from -/
-def proxyMem (a : HyperEdge X) (𝒯 : HyperTreeCons X) : Prop := a ∈ (𝒯 : HyperGraph X)
-
-
-/-- The inductive and proxy membership APIs are equivalent. -/
-theorem coe_mem
-    {a : HyperEdge X}
-    {𝒯 : HyperTreeCons X}
-    :
-    inductiveMem a 𝒯 ↔ proxyMem a 𝒯
-    := by
-  constructor <;> (intro h_mem₁; cases 𝒯)
-  · rw [h_mem₁]
-    exact List.Mem.head []
-  · apply Multiset.mem_cons.mpr
-    exact h_mem₁
-  · cases h_mem₁
-    case head => rfl
-    case tail =>
-      rename_i h_mem₂
-      -- Weird
-      cases h_mem₂
-  · apply Multiset.mem_cons.mp
-    exact h_mem₁
-  done
+instance : Membership (HyperEdge X) (HyperTree X) where
+  mem a 𝒯 := a ∈ 𝒯.toList
 
 
 @[simp]
-theorem mem_head {𝒯 : HyperTreeCons X} {t : HyperGraph.DisjointTwig 𝒯} : (t : HyperEdge X) ∈ 𝒯 ::ₜ t := by
-  apply Or.inl rfl
-  done
-
-@[simp]
-theorem mem_tail' {x : HyperEdge X} {ℋ : HyperGraph X} {t : ℋ.DisjointTwig} (p : x ∈ ℋ) : x ∈ HyperTreeCons'.cons ℋ t := by
-  apply Or.inr p
-  done
+theorem mem_cases {a : HyperEdge X} {𝒯 : HyperTree X} : (a ∈ 𝒯) ↔ a = 𝒯.head ∨ a ∈ 𝒯.tail :=
+  List.mem_cons
 
 
-@[simp]
-theorem mem_singleton_self (a : HyperEdge X) : a ∈ ({a} : HyperTreeCons X) := by
-  rfl
-  done
+theorem mem_singleton {a b : HyperEdge X} : a ∈ ({b} : HyperTree X) ↔ a = b := List.mem_singleton
 
 
-@[simp]
-theorem mem_singleton {a b : HyperEdge X} : a ∈ ({b} : HyperTreeCons X) ↔ a = b := by
-  constructor <;> intro h_mem
-  · exact h_mem
-  · rw [h_mem]
-    exact HyperTree.mem_singleton_self _
+theorem coe_mem {a : HyperEdge X} {𝒯 : HyperTree X} : a ∈ 𝒯 ↔ a ∈ (𝒯 : HyperGraph X) := by
+  constructor <;> intro h
+  · exact List.mem_toFinset.mpr h
+  · exact List.mem_toFinset.mp h
   done
 
 
--- Long proof, not very useful. Good exercise.
- theorem eq_singleton_iff_unique_mem {𝒯 : HyperTreeCons X} {a : HyperEdge X} : 𝒯 = {a} ↔ a ∈ 𝒯 ∧ ∀ x ∈ 𝒯, x = a := by
-  constructor <;> intro h_mem
-  · rw [h_mem]
-    exact ⟨mem_singleton_self _, fun _ => mem_singleton.1⟩
-  · cases 𝒯 <;> cases h_mem
-    · rename_i h_mem_right h_mem_left
-      rw [h_mem_right]
-      rfl
-    · rename_i ℋ t h_mem_left h_mem_right
-      have h_t_nin_H : ↑t ∉ ℋ := t.2.1
-      have h_t_in_H : ↑t ∈ ℋ := by
-        have h_H_singleton : ℋ = ⟨{↑t}, _⟩ := by
-          apply HyperGraph.coe_singleton.mpr
-          apply (@Finset.eq_singleton_iff_nonempty_unique_mem (HyperEdge X) ℋ (↑t)).mpr
-          have h_t_unique_mem_H : ∀ x ∈ ℋ, x = t := by
-            intro x h_x_in_H
-            simp only [h_x_in_H, h_mem_right, mem_tail']
-            have h_t_eq_a : t = a := by
-              apply h_mem_right
-              dsimp [Membership.mem, inductiveMem]
-              apply Or.inl rfl
-              done
-            rw [h_t_eq_a]
-            done
-          exact ⟨ℋ.nonempty, h_t_unique_mem_H⟩
-        have h_t_in_H_val : ↑t ∈ ℋ.val := by
-          rw [congrArg HyperGraph.val h_H_singleton]
-          apply Finset.mem_singleton_self
-        exact h_t_in_H_val
-      contradiction
+theorem nodup_tail (𝒯 : HyperTree X) : 𝒯.tail.Nodup := List.nodup_cons.mp 𝒯.nodup |>.right
 
 
- theorem singleton_iff_unique_mem (𝒯 : HyperTreeCons X) : (∃ a, 𝒯 = {a}) ↔ ∃! a, a ∈ 𝒯 := by
-  simp only [eq_singleton_iff_unique_mem, ExistsUnique]
+theorem head_nin_tail (𝒯 : HyperTree X) : 𝒯.head ∉ 𝒯.tail := List.nodup_cons.mp 𝒯.nodup |>.left
 
 
--- For practice.
-/-- A small lemma formalizing a comment made by Shenoy and Shafer. -/
-theorem two_elt_hypertree_lemma (𝒯 : HyperTreeCons X) (_ : 𝒯 = {b} ::ₜ t) : (b ∩ t).Nonempty := by
-  have h₁ := t.property.right
-  whnf at h₁
-  simp only [coe_singleton] at h₁
-  have h₂ : HyperGraph.Branch {b} b t := by
-    dsimp only [singleton, Membership.mem] at h₁
-    dsimp only [HyperGraph.singleton, HyperGraph.mem, HyperGraph.toFinset] at h₁
-    simp only [Finset.mem_singleton, exists_eq_left] at h₁
-    exact h₁
-  exact h₂.2.1
+theorem disjoint_edge_ne_head (𝒯 : HyperTree X) (a : HyperEdge X) (h : a ∉ 𝒯) : a ≠ 𝒯.head := by
+  simp only [mem_cases] at h
+  intro h₂
+  exact absurd (h₂) (not_or.mp h |>.left)
   done
 
 
-structure HyperTree (ℋ : HyperGraph X) where
-  construction : HyperTreeCons X
-  constructs : construction.toHyperGraph = ℋ
+theorem disjoint_edge_nin_tail (𝒯 : HyperTree X) (a : HyperEdge X) (h : a ∉ 𝒯) : a ∉ 𝒯.tail := by
+  simp only [mem_cases] at h
+  exact not_or.mp h |>.right
+  done
+
+
+theorem cons_list_nodup (𝒯 : HyperTree X) (a : HyperEdge X) (h : a ∉ 𝒯) : List.Nodup (a :: 𝒯.head :: 𝒯.tail) := by
+    simp only [List.nodup_cons, Bool.not_eq_true, List.mem_cons]
+    refine ⟨?_, head_nin_tail 𝒯, nodup_tail 𝒯⟩
+    intro h₂
+    apply Or.elim h₂
+    · intro h₃
+      exact absurd h₃ (disjoint_edge_ne_head 𝒯 a h)
+    · intro h₃
+      exact absurd h₃ (disjoint_edge_nin_tail 𝒯 a h)
+
+
+theorem cons_twig (𝒯 : HyperTree X) (a : @HyperGraph.DisjointTwig X inst 𝒯) : ConsTwig a (𝒯.head :: 𝒯.tail) :=
+  ConsTwig.cons a.property.right 𝒯.constwig
+
+
+-- TODO: Figure out why `HyperGraph.DisjointTwig` needs so much help.
+/-- Attach a new twig to a hypertree, producing another hypertree. -/
+def HyperTree.cons (𝒯 : HyperTree X) (a : @HyperGraph.DisjointTwig X inst 𝒯) : HyperTree X := ⟨
+    a,
+    (𝒯.head::𝒯.tail),
+    cons_list_nodup 𝒯 a (Iff.not coe_mem |>.mpr a.property.left),
+    cons_twig 𝒯 a
+  ⟩
+
+
+@[inherit_doc]
+infixl:70 " ::ₛ "  => HyperTree.cons
+
+
+theorem mem_cons {𝒯 : HyperTree X} {a : @HyperGraph.DisjointTwig X inst 𝒯} {b : HyperEdge X} : b ∈ (𝒯::ₛa) ↔ b ∈ 𝒯 ∨ b = a := by
+  constructor <;> intro h
+  · cases h with
+      | head _ => exact Or.inr rfl
+      | tail _ h₂ => exact Or.inl h₂
+  · dsimp only [Membership.mem] at *
+    dsimp only [HyperTree.cons, HyperTree.toList] at *
+    apply Or.elim h <;> intro h₂
+    · exact List.Mem.tail _ h₂
+    · rw [h₂]
+      exact List.Mem.head _
+  done
+
+
+end HyperTree

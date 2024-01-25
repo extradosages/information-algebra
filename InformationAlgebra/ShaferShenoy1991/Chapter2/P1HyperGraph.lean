@@ -142,7 +142,7 @@ def HyperGraph.Branch
 that of being a branch.
 
 See `Branch`.-/
-private def Twig'
+def HyperGraph.Twig'
     (ℋ : HyperGraph X)
     (t : HyperEdge X)
     :
@@ -152,13 +152,13 @@ private def Twig'
 
 
 /-- Utility proposition stipulating that a twig is disjoint from a hypergraph. -/
-private def DisjointTwig'
+def HyperGraph.DisjointTwig'
     (ℋ : HyperGraph X)
     (t : HyperEdge X)
     :
     Prop
     :=
-  t ∉ ℋ ∧ HyperGraph.Twig' ℋ t
+  t ∉ ℋ ∧ ℋ.Twig' t
 
 
 /-- The type of all twigs of a hypergraph. -/
@@ -172,8 +172,15 @@ def HyperGraph.Twig
 def HyperGraph.DisjointTwig
     (ℋ : HyperGraph X)
     :=
-  { t : HyperEdge X // DisjointTwig' ℋ t }
+  { t : HyperEdge X // ℋ.DisjointTwig' t }
 
 
 instance {ℋ : HyperGraph X} : CoeOut (ℋ.DisjointTwig) (HyperEdge X) where
   coe t := t.val
+
+
+namespace List
+
+
+def toHyperGraph (a : HyperEdge X) (l : List (HyperEdge X)) : HyperGraph X :=
+  ⟨(a::l).toFinset, (List.toFinset_nonempty_iff (a :: l)).mpr (List.cons_ne_nil a l)⟩
