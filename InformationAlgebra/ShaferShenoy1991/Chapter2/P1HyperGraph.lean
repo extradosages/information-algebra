@@ -182,5 +182,18 @@ instance {ℋ : HyperGraph X} : CoeOut (ℋ.DisjointTwig) (HyperEdge X) where
 namespace List
 
 
-def toHyperGraph (a : HyperEdge X) (l : List (HyperEdge X)) : HyperGraph X :=
-  ⟨(a::l).toFinset, (List.toFinset_nonempty_iff (a :: l)).mpr (List.cons_ne_nil a l)⟩
+def toHyperGraph (root : HyperEdge X) (nonRoots : List (HyperEdge X)) : HyperGraph X :=
+  ⟨nonRoots.toFinset ∪ {root}, Finset.Nonempty.inr <| Finset.singleton_nonempty root⟩
+
+
+theorem mem_toHyperGraph
+    {root : HyperEdge X}
+    {nonRoots : List (HyperEdge X)}
+    :
+    a ∈ toHyperGraph root nonRoots ↔ a ∈ nonRoots ∨ a = root
+    := by
+  simp_all only [Membership.mem]
+  simp_all only [HyperGraph.mem, HyperGraph.toFinset, toHyperGraph]
+  simp_all only [Finset.mem_union, Finset.mem_singleton, List.mem_toFinset]
+  exact Iff.rfl
+  done
