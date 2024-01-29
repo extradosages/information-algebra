@@ -127,6 +127,7 @@ theorem coe_mem {a : HyperEdge X} {𝒯 : HyperTree X} : a ∈ 𝒯 ↔ a ∈ (�
   simp only [HyperGraph.mem, HyperGraph.toFinset, HyperTree.toHyperGraph, List.toHyperGraph, List.mem_toFinset, List.mem_cons]
   simp only [Membership.mem]
   rw [Or.comm]
+  sorry
   done
 
 
@@ -158,6 +159,9 @@ def cons_nodup (𝒯 : HyperTree X) (a : HyperEdge X) (h : a ∉ 𝒯) := And.in
 
 theorem cons_cons_twig (𝒯 : HyperTree X) (a : @HyperGraph.DisjointTwig X inst 𝒯) : ConsTwig 𝒯.root (a :: 𝒯.nonRoots) :=
   ConsTwig.cons a.property.right 𝒯.cons_twig
+
+
+def HyperTree.nil (a : HyperEdge X) : HyperTree X := {a}
 
 
 -- TODO: Figure out why `HyperGraph.DisjointTwig` needs so much help.

@@ -109,4 +109,25 @@ theorem H1_branch_edge₂_edge₁ : ℋ₁.Branch edge₂ edge₁ := by branch X
 theorem H1_branch_edge₃_edge₁ : ℋ₁.Branch edge₃ edge₁ := by branch X
 theorem H1_branch_edge₃_edge₂ : ℋ₁.Branch edge₃ edge₂ := by branch X
 
+
+def 𝒯₁₁ : HyperTree Element := {
+  root := edge₁,
+  nonRoots := edge₃ :: [edge₂],
+  nodup := by decide
+  cons_twig := by
+    apply ConsTwig.cons
+    · apply Exists.intro edge₂
+      apply And.intro
+      · apply Finset.insert_eq_self.mp rfl
+      · branch X
+    · apply ConsTwig.cons
+      · apply Exists.intro edge₁
+        apply And.intro
+        · apply Finset.insert_eq_self.mp rfl
+        · branch X
+      · apply ConsTwig.nil
+    done
+}
+
+
 end Example2
