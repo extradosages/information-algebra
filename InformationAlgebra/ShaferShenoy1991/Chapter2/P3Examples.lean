@@ -110,24 +110,62 @@ theorem H1_branch_edge₃_edge₁ : ℋ₁.Branch edge₃ edge₁ := by branch X
 theorem H1_branch_edge₃_edge₂ : ℋ₁.Branch edge₃ edge₂ := by branch X
 
 
+-- TODO: Extract into recursive macro
 def 𝒯₁₁ : HyperTree Element := {
   root := edge₁,
   nonRoots := edge₃ :: [edge₂],
   nodup := by decide
   cons_twig := by
-    apply ConsTwig.cons
-    · apply Exists.intro edge₂
-      apply And.intro
-      · apply Finset.insert_eq_self.mp rfl
-      · branch X
-    · apply ConsTwig.cons
-      · apply Exists.intro edge₁
-        apply And.intro
-        · apply Finset.insert_eq_self.mp rfl
-        · branch X
-      · apply ConsTwig.nil
+    repeat
+      apply ConsTwig.cons
+      apply Exists.intro
+      simp only [H1_branch_edge₁_edge₂, H1_branch_edge₁_edge₃, H1_branch_edge₂_edge₃, H1_branch_edge₂_edge₁, H1_branch_edge₃_edge₁, H1_branch_edge₃_edge₂]
     done
 }
 
 
 end Example2
+
+namespace List
+
+/-- If `R` is a relation between inhabitants of a type and lists of that type, `ConsWise R l` is a
+proposition that `R` holds between all elements in the list `l` and their respective "initial
+sections". -/
+inductive ConsWise (R : α → (List α) → Prop) : List α → Prop where
+  | nil  : ConsWise R []
+  | cons : ∀ {a : α} {l : List α}, R a l → ConsWise R l → ConsWise R (a :: l)
+
+
+def ContrivedRelation (n : Nat) (l : List Nat) : Prop := match l with
+  | a :: [] => n > a
+  | b :: _ :: [] => n < b
+  | _ => True
+
+
+def somePowersOfTwo : List Nat := [16, 8, 4, 2, 1]
+
+
+example : ConsWise GreaterThanSum somePowersOfTwo := by
+  apply ConsWise.cons
+  · dsimp only [GreaterThanSum]
+    norm_num
+  · apply ConsWise.cons
+    · dsimp only [GreaterThanSum]
+      norm_num
+    · apply ConsWise.cons
+      · dsimp only [GreaterThanSum]
+        norm_num
+      · apply ConsWise.cons
+        · dsimp only [GreaterThanSum]
+          norm_num
+        · apply ConsWise.cons
+          · dsimp only [GreaterThanSum]
+            norm_num
+          · apply ConsWise.nil
+  done
+
+
+example [HMul α α α] (a b : α) : α := Mul.mul a b
+
+
+end List
