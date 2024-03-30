@@ -43,14 +43,19 @@ def HyperGraph.toFinset (ℋ : HyperGraph X) : Finset (HyperEdge X) := ℋ.val
 instance : Coe (HyperGraph X) (Finset (HyperEdge X)) := ⟨HyperGraph.toFinset⟩
 
 
-/-- A hyperedge is a member of a hypergraph when it is so from a `Finset` perspective. -/
 protected def mem (a : HyperEdge X) (ℋ : HyperGraph X) : Prop := a ∈ (ℋ : Finset _)
 
 
+/-- A hyperedge is a member of a hypergraph when it is so from a `Finset` perspective. -/
 instance : Membership (HyperEdge X) (HyperGraph X) := ⟨HyperGraph.mem⟩
 
 
 instance (ℋ : HyperGraph X) (b : HyperEdge X) : Decidable (b ∈ ℋ) := Finset.decidableMem b ℋ
+
+
+instance : CoeSort (HyperGraph X) (Type _) where
+  coe ℋ := { a : HyperEdge X // a ∈ ℋ }
+
 
 
 /-- A hypergraph is a subset of another if it is so from a `Finset` perspective. -/
@@ -212,11 +217,36 @@ instance {ℋ : HyperGraph X} : CoeOut (ℋ.DisjointTwig) (HyperEdge X) where
   coe t := t.val
 
 
-def HyperGraph.Superfluous (ℋ : HyperGraph X) (a b : HyperEdge X) := b ∈ ℋ ∧ a ⊆ b
+/-- One edge in a hypergraph makes another edge in the hypergraph superfluous if the
+former strictly contains the latter.
+
+Note that these edges are implicitly distinct. -/
+def HyperGraph.Superfluous (ℋ : HyperGraph X) (a b : ℋ) := (a : HyperEdge X) ⊂ b
 
 
-instance (ℋ : HyperGraph X) : DecidablePred (ℋ.Superfluous a) := by
-  intro b; exact And.decidable; done
+/-- A singleton hypergraph contains no superfluous edges. -/
+theorem singleton_not_superfluous : ¬({a} : HyperGraph X).Superfluous b c := by
+  intro h₁
+  have h₂ : ↑b = a := Finset.mem_singleton.mp b.property
+  have h₃ : ↑c = a := Finset.mem_singleton.mp c.property
+  have h₄ : ↑b = ↑c := Eq.trans h₂ h₃.symm
+  have h₅ : ¬(b : HyperEdge X) = c := ne_of_lt h₁
+  exact absurd h₄ h₅
+  done
+
+
+
+theorem erase_superfluous
+    (ℋ : HyperGraph X)
+    (h₁ : ℋ.Superfluous a b)
+    (h₂ : ℋ.Superfluous c d)
+    (h₃ : a ≠ c)
+    (h₄ : Finset.erase ℋ a |>.Nonempty)
+    :
+    (⟨Finset.erase ℋ a, h₄⟩ : HyperGraph X).Superfluous c d
+    :=
+    by
+  done
 
 
 theorem superfluous_of_sub (ℋ₁ ℋ₂ : HyperGraph X) (p : ℋ₁ ⊆ ℋ₂) (q: ℋ₁.Superfluous a b) : ℋ₂.Superfluous a b :=
@@ -242,8 +272,18 @@ theorem exists_not_superfluous_singleton : ∃ a, ¬({b} : HyperGraph X).ExistsN
   done
 
 
+example (p: α → Prop) : (∃ a, ¬p a) → (¬∀ a, p a) := by
+  apply?
+  done
+
+
 theorem exists_not_superfluous (ℋ : HyperGraph X) : ∃ a, ¬ℋ.ExistsNeSuperfluous a := by
-  have h₁ := exists_singleton_sub ℋ
+  apply not_forall.mp
+  intro h₁
+  have b : HyperEdge X := sorry
+  have c : HyperEdge X := sorry
+  have h₂ := h₁ b
+
   done
 
 
@@ -254,7 +294,6 @@ def Skeletal
 
 
 def skeleton (ℋ : HyperGraph X) : HyperGraph X := ⟨ℋ.val \ (Finset.filter (ℋ.HyperGraph.ExistsNeSuperfluous) ℋ), _⟩
-
 
 
 inductive ConsWise'
